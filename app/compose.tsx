@@ -10,11 +10,12 @@ import {
   KeyboardAvoidingView,
   Platform,
   Switch,
-  SafeAreaView,
+  ActivityIndicator,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
-import { X, Image as ImageIcon, Video, Mic, ArrowLeft, Type } from 'lucide-react-native';
+import { X, Image as ImageIcon, Video, Mic, ArrowLeft, Type, Camera } from 'lucide-react-native';
 import { useAuth } from '../contexts/AuthContext';
 import { useTodaysPrompt } from '../hooks/usePrompt';
 import { useUserResponse, useCreateResponse, useUpdateResponse } from '../hooks/useResponses';
@@ -26,8 +27,8 @@ import * as haptics from '../utils/haptics';
 export default function ComposePage() {
   const router = useRouter();
   const { user } = useAuth();
-  const { data: todaysPrompt } = useTodaysPrompt();
-  const { data: existingResponse } = useUserResponse(user?.id, todaysPrompt?.id);
+  const { data: todaysPrompt, isLoading: promptLoading } = useTodaysPrompt();
+  const { data: existingResponse, isLoading: responseLoading } = useUserResponse(user?.id, todaysPrompt?.id);
   const createResponse = useCreateResponse();
   const updateResponse = useUpdateResponse();
 
@@ -227,9 +228,46 @@ export default function ComposePage() {
   };
 
   const hasContent = textContent || mediaUri || audioUri;
+  const isLoading = promptLoading || responseLoading;
+
+  if (promptLoading) {
+    return (
+      <SafeAreaView edges={['top']} className="flex-1 bg-white">
+        <View className="flex-row items-center px-5 py-4 border-b border-gray-100">
+          <TouchableOpacity onPress={() => router.back()}>
+            <ArrowLeft size={24} color="#000" />
+          </TouchableOpacity>
+        </View>
+        <View className="flex-1 items-center justify-center">
+          <ActivityIndicator size="large" color="#FFBF00" />
+          <Text className="text-gray-500 mt-4">Loading prompt...</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  if (!todaysPrompt) {
+    return (
+      <SafeAreaView edges={['top']} className="flex-1 bg-white">
+        <View className="flex-row items-center px-5 py-4 border-b border-gray-100">
+          <TouchableOpacity onPress={() => router.back()}>
+            <ArrowLeft size={24} color="#000" />
+          </TouchableOpacity>
+        </View>
+        <View className="flex-1 items-center justify-center px-6">
+          <Text className="text-xl font-bold text-gray-900 text-center mb-2">
+            No prompt today
+          </Text>
+          <Text className="text-gray-600 text-center">
+            Check back tomorrow for a new daily prompt!
+          </Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   return (
-    <SafeAreaView className="flex-1 bg-white">
+    <SafeAreaView edges={['top']} className="flex-1 bg-white">
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         className="flex-1 bg-white"
@@ -237,26 +275,26 @@ export default function ComposePage() {
         <View className="flex-1">
           {/* Header */}
           <View className="px-5 pt-4 pb-3 border-b border-gray-100">
-          <View className="flex-row items-center justify-between mb-3">
-            <TouchableOpacity onPress={() => router.back()}>
-              <ArrowLeft size={24} color="#000" />
-            </TouchableOpacity>
-            <Text className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
-              Today's Prompt
+            <View className="flex-row items-center justify-between mb-3">
+              <TouchableOpacity onPress={() => router.back()}>
+                <ArrowLeft size={24} color="#000" />
+              </TouchableOpacity>
+              <Text className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                Today's Prompt
+              </Text>
+              <View className="w-6" />
+            </View>
+            <Text className="text-xl font-bold text-black">
+              {todaysPrompt.text}
             </Text>
-            <View className="w-6" />
           </View>
-          <Text className="text-xl font-bold text-black">
-            {todaysPrompt?.text}
-          </Text>
-        </View>
 
         <ScrollView className="flex-1" contentContainerStyle={{ paddingBottom: 20 }}>
           {/* Response Preview Card */}
-          <View className="px-5 py-6">
+          <View className="px-5 py-4">
             <View
               className="bg-black rounded-3xl overflow-hidden"
-              style={{ aspectRatio: 9/11 }}
+              style={{ aspectRatio: 4/3 }}
             >
               {activeTab === 'text' && (
                 <View className="flex-1 p-6 justify-center">
@@ -283,7 +321,7 @@ export default function ComposePage() {
                         resizeMode="cover"
                       />
                       {textContent && (
-                        <View className="absolute bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-black/80 to-transparent">
+                        <View className="absolute bottom-0 left-0 right-0 p-4" style={{ backgroundColor: 'rgba(0,0,0,0.6)' }}>
                           <Text className="text-white text-base text-center">
                             {textContent}
                           </Text>
@@ -301,8 +339,26 @@ export default function ComposePage() {
                     </>
                   ) : (
                     <View className="flex-1 items-center justify-center">
-                      <ImageIcon size={48} color="white" strokeWidth={1.5} />
-                      <Text className="text-white mt-3 text-sm">Add an image</Text>
+                      <View className="flex-row gap-8">
+                        <TouchableOpacity
+                          onPress={takePhoto}
+                          className="items-center"
+                        >
+                          <View className="w-16 h-16 rounded-full bg-white/20 items-center justify-center mb-2">
+                            <Camera size={28} color="white" />
+                          </View>
+                          <Text className="text-white text-sm">Camera</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                          onPress={pickImage}
+                          className="items-center"
+                        >
+                          <View className="w-16 h-16 rounded-full bg-white/20 items-center justify-center mb-2">
+                            <ImageIcon size={28} color="white" />
+                          </View>
+                          <Text className="text-white text-sm">Library</Text>
+                        </TouchableOpacity>
+                      </View>
                     </View>
                   )}
                 </>
@@ -358,17 +414,7 @@ export default function ComposePage() {
               </TouchableOpacity>
 
               <TouchableOpacity
-                onPress={() => {
-                  if (!mediaUri) {
-                    Alert.alert('Add Media', 'Choose an option', [
-                      { text: 'Take Photo', onPress: takePhoto },
-                      { text: 'Choose from Library', onPress: pickImage },
-                      { text: 'Cancel', style: 'cancel' },
-                    ]);
-                  } else {
-                    setActiveTab('image');
-                  }
-                }}
+                onPress={() => setActiveTab('image')}
                 className={`flex-1 py-3 rounded-full flex-row items-center justify-center ${
                   activeTab === 'image' ? 'bg-white' : 'bg-transparent'
                 }`}
@@ -378,7 +424,7 @@ export default function ComposePage() {
                 <Text className={`ml-2 font-semibold ${
                   activeTab === 'image' ? 'text-black' : 'text-gray-600'
                 }`}>
-                  Image
+                  Photo
                 </Text>
               </TouchableOpacity>
 
@@ -398,6 +444,22 @@ export default function ComposePage() {
               </TouchableOpacity>
             </View>
           </View>
+
+          {/* Text Input for Image Tab */}
+          {activeTab === 'image' && mediaUri && (
+            <View className="px-5 mb-4">
+              <TextInput
+                className="bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-base"
+                placeholder="Add a caption..."
+                placeholderTextColor="#9ca3af"
+                value={textContent}
+                onChangeText={setTextContent}
+                multiline
+                maxLength={500}
+                editable={!loading}
+              />
+            </View>
+          )}
 
           {/* Audio Recorder */}
           {activeTab === 'audio' && !audioUri && (
