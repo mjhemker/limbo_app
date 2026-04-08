@@ -32,6 +32,8 @@ export default function Index() {
 
     if (session && !inAuthGroup) {
       router.replace('/(tabs)/feed');
+    } else if (session && inAuthGroup) {
+      router.replace('/(tabs)/feed');
     } else if (!session && !inAuthGroup) {
       router.replace('/auth/login');
     }
