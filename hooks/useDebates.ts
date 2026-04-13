@@ -52,18 +52,18 @@ export function useCreateDebatePrompt() {
 
   return useMutation({
     mutationFn: ({
-      circleId,
+      chatId,
       createdBy,
       sideA,
       sideB,
     }: {
-      circleId: string;
+      chatId: string;
       createdBy: string;
       sideA: string;
       sideB: string;
-    }) => debatesService.createDebatePrompt(circleId, createdBy, sideA, sideB),
+    }) => debatesService.createDebatePrompt(chatId, createdBy, sideA, sideB),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['circlePrompts'] });
+      queryClient.invalidateQueries({ queryKey: ['chatPrompts'] });
     },
   });
 }
@@ -73,14 +73,12 @@ export function useSubmitDebateResponse() {
 
   return useMutation({
     mutationFn: async ({
-      circleId,
       promptId,
       userId,
       side,
       textContent,
       mediaFile,
     }: {
-      circleId: string;
       promptId: string;
       userId: string;
       side: 'side_a' | 'side_b';
@@ -90,14 +88,12 @@ export function useSubmitDebateResponse() {
       let mediaUrl = null;
       let mediaType = null;
 
-      // Upload media if provided
       if (mediaFile) {
-        mediaUrl = await storageService.uploadResponseMedia(mediaFile, userId);
+        mediaUrl = await storageService.uploadResponseMedia(mediaFile, userId, undefined);
         mediaType = mediaFile.type?.split('/')[0] as 'image' | 'video' | undefined;
       }
 
       return debatesService.submitDebateResponse(
-        circleId,
         promptId,
         userId,
         side,
@@ -109,7 +105,7 @@ export function useSubmitDebateResponse() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['debateResponses'] });
       queryClient.invalidateQueries({ queryKey: ['debateStats'] });
-      queryClient.invalidateQueries({ queryKey: ['circlePromptResponses'] });
+      queryClient.invalidateQueries({ queryKey: ['chatPromptResponses'] });
     },
   });
 }

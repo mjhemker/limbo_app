@@ -33,8 +33,7 @@ export function useFriendsResponses(promptId?: string, userId?: string) {
 
 interface CreateResponseParams {
   userId: string;
-  promptId?: string;
-  optionalPromptId?: string;
+  promptId: string;
   textContent?: string;
   mediaFile?: FileUpload;
   audioFile?: FileUpload;
@@ -48,23 +47,19 @@ export function useCreateResponse() {
     mutationFn: async ({
       userId,
       promptId,
-      optionalPromptId,
       textContent,
       mediaFile,
       audioFile,
       isVisible,
     }: CreateResponseParams) => {
       try {
-        // Generate a temporary ID for the response
         const tempId = Crypto.randomUUID();
 
         let mediaUrl = null;
         let mediaType = null;
         let audioUrl = null;
 
-        // Upload media file if provided
         if (mediaFile) {
-          console.log('Uploading media file:', mediaFile.name, mediaFile.type);
           mediaUrl = await storageService.uploadResponseMedia(
             mediaFile,
             userId,
@@ -73,27 +68,20 @@ export function useCreateResponse() {
           mediaType = mediaFile.type?.split('/')[0] as
             | 'image'
             | 'video'
-            | undefined; // 'image', 'video', etc.
-          console.log('Media uploaded:', mediaUrl);
+            | undefined;
         }
 
-        // Upload audio if provided
         if (audioFile) {
-          console.log('Uploading audio file');
           audioUrl = await storageService.uploadResponseMedia(
             audioFile,
             userId,
             tempId
           );
-          console.log('Audio uploaded:', audioUrl);
         }
 
-        // Create the response record
-        console.log('Creating response record');
         const response = await responsesService.createResponse({
           user_id: userId,
           prompt_id: promptId,
-          optional_prompt_id: optionalPromptId,
           text_content: textContent,
           media_url: mediaUrl || undefined,
           media_type: mediaType,
@@ -101,7 +89,6 @@ export function useCreateResponse() {
           is_visible: isVisible,
         });
 
-        console.log('Response created:', response);
         return response;
       } catch (error) {
         console.error('Error in createResponse:', error);
@@ -147,7 +134,6 @@ export function useUpdateResponse() {
       let mediaType = null;
       let audioUrl = existingAudioUrl;
 
-      // Upload new media file if provided
       if (mediaFile) {
         mediaUrl = await storageService.uploadResponseMedia(
           mediaFile,
@@ -160,7 +146,6 @@ export function useUpdateResponse() {
           | undefined;
       }
 
-      // Upload new audio if provided
       if (audioFile) {
         audioUrl = await storageService.uploadResponseMedia(
           audioFile,
@@ -169,7 +154,6 @@ export function useUpdateResponse() {
         );
       }
 
-      // Update the response record
       return responsesService.updateResponse(responseId, {
         text_content: textContent,
         media_url: mediaUrl,

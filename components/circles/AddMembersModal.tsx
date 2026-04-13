@@ -12,7 +12,7 @@ import {
 import { X, UserPlus, Search } from 'lucide-react-native';
 import { useFriends } from '../../hooks/useFriends';
 import { useAuth } from '../../contexts/AuthContext';
-import { useCircleMembers } from '../../hooks/useCircles';
+import { useChatMembers as useCircleMembers } from '../../hooks/useChats';
 
 interface AddMembersModalProps {
   visible: boolean;

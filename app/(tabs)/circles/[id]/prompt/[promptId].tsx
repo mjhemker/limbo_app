@@ -17,7 +17,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { ArrowLeft, X, Image as ImageIcon, Share } from 'lucide-react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { useAuth } from '../../../../../contexts/AuthContext';
-import { useCirclePromptResponses, useSubmitCircleResponse } from '../../../../../hooks/useCircles';
+import { useChatPromptResponses as useCirclePromptResponses, useSubmitChatResponse as useSubmitCircleResponse } from '../../../../../hooks/useChats';
 import { storageService } from '../../../../../services/supabase/storage';
 import { toast } from '../../../../../utils/toast';
 import * as haptics from '../../../../../utils/haptics';
@@ -90,8 +90,7 @@ export default function CirclePromptDetailPage() {
       }
 
       await submitResponse.mutateAsync({
-        circleId,
-        circlePromptId: promptId,
+        promptId,
         userId: user.id,
         textContent: responseText.trim(),
         mediaUrl,

@@ -14,7 +14,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { ArrowLeft, Users, UserMinus, LogOut, Check, Camera, X } from 'lucide-react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { useAuth } from '../../../../contexts/AuthContext';
-import { useCircle, useCircleMembers, useLeaveCircle, useUpdateCircle } from '../../../../hooks/useCircles';
+import { useChat as useCircle, useChatMembers as useCircleMembers, useLeaveChat as useLeaveCircle, useUpdateChat as useUpdateCircle } from '../../../../hooks/useChats';
 import { AddMembersModal } from '../../../../components/circles/AddMembersModal';
 import { COLORS } from '../../../../lib/constants';
 
@@ -95,7 +95,7 @@ export default function CircleSettingsPage() {
 
     try {
       await updateCircle.mutateAsync({
-        circleId: id,
+        chatId: id,
         updates: {
           name: circleName.trim(),
           description: circleDescription.trim() || null,
@@ -140,7 +140,7 @@ export default function CircleSettingsPage() {
           onPress: async () => {
             if (!user || !id) return;
             try {
-              await leaveCircle.mutateAsync({ circleId: id, userId: user.id });
+              await leaveCircle.mutateAsync({ chatId: id, userId: user.id });
               router.back();
             } catch (error: any) {
               Alert.alert('Error', error.message || 'Failed to leave circle');

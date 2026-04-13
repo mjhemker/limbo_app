@@ -1,59 +1,49 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { messagesService } from '../services/supabase/messages';
 import { storageService, FileUpload } from '../services/supabase/storage';
-import { useMessagesRealtime, useConversationsRealtime } from './useRealtimeSubscription';
+import { useChatMessagesRealtime, useChatsRealtime } from './useRealtimeSubscription';
 
-export function useConversation(userId?: string, otherUserId?: string) {
-  // Subscribe to realtime updates
-  useMessagesRealtime(userId, otherUserId);
+export function useChatMessages(chatId?: string) {
+  useChatMessagesRealtime(chatId);
 
   return useQuery({
-    queryKey: ['conversation', userId, otherUserId],
-    queryFn: () => messagesService.getConversation(userId!, otherUserId!),
-    enabled: !!(userId && otherUserId),
-    // Removed polling - using Realtime subscriptions instead
+    queryKey: ['chatMessages', chatId],
+    queryFn: () => messagesService.getChatMessages(chatId!),
+    enabled: !!chatId,
   });
 }
 
-export function useConversations(userId?: string) {
-  // Subscribe to realtime updates
-  useConversationsRealtime(userId);
+export function useChats(userId?: string) {
+  useChatsRealtime(userId);
 
   return useQuery({
-    queryKey: ['conversations', userId],
-    queryFn: () => messagesService.getConversations(userId!),
+    queryKey: ['chats', userId],
+    queryFn: () => messagesService.getChats(userId!),
     enabled: !!userId,
-    // Removed polling - using Realtime subscriptions instead
   });
 }
 
 export function useUnreadCount(userId?: string) {
-  // Subscribe to realtime updates (will be handled by useConversationsRealtime)
-  useConversationsRealtime(userId);
+  useChatsRealtime(userId);
 
   return useQuery({
     queryKey: ['unreadCount', userId],
     queryFn: () => messagesService.getUnreadCount(userId!),
     enabled: !!userId,
-    // Removed polling - using Realtime subscriptions instead
   });
 }
 
 export function useSuggestedConversations(userId?: string) {
-  // Subscribe to realtime updates (conversations changes affect suggestions)
-  useConversationsRealtime(userId);
-
   return useQuery({
     queryKey: ['suggestedConversations', userId],
     queryFn: () => messagesService.getSuggestedConversations(userId!),
     enabled: !!userId,
-    // Reduced from 60s polling to Realtime - will refresh when conversations change
   });
 }
 
 interface SendMessageParams {
+  chatId: string;
   senderId: string;
-  recipientId: string;
   content: string;
   responseId?: string;
   mediaFile?: FileUpload;
@@ -65,8 +55,8 @@ export function useSendMessage() {
 
   return useMutation({
     mutationFn: async ({
+      chatId,
       senderId,
-      recipientId,
       content,
       responseId,
       mediaFile,
@@ -75,7 +65,6 @@ export function useSendMessage() {
       let mediaUrl = null;
       let mediaType = null;
 
-      // Upload media if provided
       if (mediaFile) {
         mediaUrl = await storageService.uploadMessageMedia(mediaFile, senderId);
         mediaType = mediaFile.type?.split('/')[0] as
@@ -86,8 +75,8 @@ export function useSendMessage() {
       }
 
       return messagesService.sendMessage(
+        chatId,
         senderId,
-        recipientId,
         content,
         responseId || null,
         mediaUrl,
@@ -96,30 +85,46 @@ export function useSendMessage() {
       );
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['conversation'] });
-      queryClient.invalidateQueries({ queryKey: ['conversations'] });
+      queryClient.invalidateQueries({ queryKey: ['chatMessages'] });
+      queryClient.invalidateQueries({ queryKey: ['chats'] });
     },
   });
 }
 
-export function useMarkConversationAsRead() {
+export function useMarkChatAsRead() {
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: ({
+      chatId,
       userId,
-      otherUserId,
     }: {
+      chatId: string;
       userId: string;
-      otherUserId: string;
-    }) => messagesService.markConversationAsRead(userId, otherUserId),
+    }) => messagesService.markChatAsRead(chatId, userId),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['conversation'] });
+      queryClient.invalidateQueries({ queryKey: ['chatMessages'] });
       queryClient.invalidateQueries({ queryKey: ['unreadCount'] });
+      queryClient.invalidateQueries({ queryKey: ['chats'] });
     },
   });
 }
 
-// Alias exports for compatibility
-export const useMessages = useConversation;
-export const useMarkAsRead = useMarkConversationAsRead;
+export function useGetOrCreateDMChat() {
+  return useMutation({
+    mutationFn: ({
+      userA,
+      userB,
+    }: {
+      userA: string;
+      userB: string;
+    }) => messagesService.getOrCreateDMChat(userA, userB),
+  });
+}
+
+// Backward-compatible aliases
+export const useConversation = useChatMessages;
+export const useConversations = useChats;
+export const useMessages = useChatMessages;
+export const useMarkAsRead = useMarkChatAsRead;
+export const useMarkConversationAsRead = useMarkChatAsRead;

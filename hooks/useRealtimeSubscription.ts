@@ -3,47 +3,32 @@ import { useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../lib/supabase';
 import type { RealtimeChannel } from '@supabase/supabase-js';
 
+let globalChannelId = 0;
+
 /**
- * Hook to subscribe to Supabase Realtime changes for messages
- * Automatically invalidates React Query cache when new messages arrive
+ * Hook to subscribe to messages in a specific chat (DM or group)
  */
-export function useMessagesRealtime(userId?: string, otherUserId?: string) {
+export function useChatMessagesRealtime(chatId?: string) {
   const queryClient = useQueryClient();
-
   useEffect(() => {
-    if (!userId || !otherUserId) return;
+    if (!chatId) return;
 
+    const id = ++globalChannelId;
     const channel: RealtimeChannel = supabase
-      .channel(`messages:${userId}:${otherUserId}`)
+      .channel(`chat-messages:${chatId}:${id}`)
       .on(
         'postgres_changes',
         {
-          event: 'INSERT',
+          event: '*',
           schema: 'public',
           table: 'messages',
-          filter: `or(and(sender_id.eq.${userId},recipient_id.eq.${otherUserId}),and(sender_id.eq.${otherUserId},recipient_id.eq.${userId}))`,
+          filter: `chat_id.eq.${chatId}`,
         },
         (payload) => {
-          console.log('New message received:', payload);
-          // Invalidate conversation query to refetch
-          queryClient.invalidateQueries({ queryKey: ['conversation', userId, otherUserId] });
-          queryClient.invalidateQueries({ queryKey: ['conversations', userId] });
-          queryClient.invalidateQueries({ queryKey: ['unreadCount', userId] });
-        }
-      )
-      .on(
-        'postgres_changes',
-        {
-          event: 'UPDATE',
-          schema: 'public',
-          table: 'messages',
-          filter: `or(and(sender_id.eq.${userId},recipient_id.eq.${otherUserId}),and(sender_id.eq.${otherUserId},recipient_id.eq.${userId}))`,
-        },
-        (payload) => {
-          console.log('Message updated:', payload);
-          // Invalidate queries when message is marked as read
-          queryClient.invalidateQueries({ queryKey: ['conversation', userId, otherUserId] });
-          queryClient.invalidateQueries({ queryKey: ['unreadCount', userId] });
+          console.log('Chat message updated:', payload);
+          queryClient.invalidateQueries({ queryKey: ['chatMessages', chatId] });
+          queryClient.invalidateQueries({ queryKey: ['chats'] });
+          queryClient.invalidateQueries({ queryKey: ['unreadCount'] });
         }
       )
       .subscribe();
@@ -51,31 +36,33 @@ export function useMessagesRealtime(userId?: string, otherUserId?: string) {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [userId, otherUserId, queryClient]);
+  }, [chatId, queryClient]);
 }
 
 /**
- * Hook to subscribe to all messages for a user (for conversations list)
+ * Hook to subscribe to all chats for a user (for chat list + unread counts)
+ * Listens for new messages across all the user's chats
  */
-export function useConversationsRealtime(userId?: string) {
+export function useChatsRealtime(userId?: string) {
   const queryClient = useQueryClient();
-
   useEffect(() => {
     if (!userId) return;
 
+    const id = ++globalChannelId;
+    // Subscribe to messages where the user is the sender or where they're in the chat
+    // We listen broadly and let React Query dedup
     const channel: RealtimeChannel = supabase
-      .channel(`user-messages:${userId}`)
+      .channel(`user-chats:${userId}:${id}`)
       .on(
         'postgres_changes',
         {
           event: '*',
           schema: 'public',
           table: 'messages',
-          filter: `or(sender_id.eq.${userId},recipient_id.eq.${userId})`,
         },
         (payload) => {
-          console.log('Conversations updated:', payload);
-          queryClient.invalidateQueries({ queryKey: ['conversations', userId] });
+          console.log('Chats updated:', payload);
+          queryClient.invalidateQueries({ queryKey: ['chats', userId] });
           queryClient.invalidateQueries({ queryKey: ['unreadCount', userId] });
         }
       )
@@ -92,12 +79,12 @@ export function useConversationsRealtime(userId?: string) {
  */
 export function useFriendRequestsRealtime(userId?: string) {
   const queryClient = useQueryClient();
-
   useEffect(() => {
     if (!userId) return;
 
+    const id = ++globalChannelId;
     const channel: RealtimeChannel = supabase
-      .channel(`friendships:${userId}`)
+      .channel(`friendships:${userId}:${id}`)
       .on(
         'postgres_changes',
         {
@@ -122,48 +109,16 @@ export function useFriendRequestsRealtime(userId?: string) {
 }
 
 /**
- * Hook to subscribe to circle message changes
- */
-export function useCircleMessagesRealtime(circleId?: string) {
-  const queryClient = useQueryClient();
-
-  useEffect(() => {
-    if (!circleId) return;
-
-    const channel: RealtimeChannel = supabase
-      .channel(`circle-messages:${circleId}`)
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'circle_messages',
-          filter: `circle_id.eq.${circleId}`,
-        },
-        (payload) => {
-          console.log('Circle message updated:', payload);
-          queryClient.invalidateQueries({ queryKey: ['circleMessages', circleId] });
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [circleId, queryClient]);
-}
-
-/**
  * Hook to subscribe to response reactions
  */
 export function useReactionsRealtime(responseId?: string) {
   const queryClient = useQueryClient();
-
   useEffect(() => {
     if (!responseId) return;
 
+    const id = ++globalChannelId;
     const channel: RealtimeChannel = supabase
-      .channel(`reactions:${responseId}`)
+      .channel(`reactions:${responseId}:${id}`)
       .on(
         'postgres_changes',
         {
@@ -191,12 +146,12 @@ export function useReactionsRealtime(responseId?: string) {
  */
 export function useNudgesRealtime(userId?: string) {
   const queryClient = useQueryClient();
-
   useEffect(() => {
     if (!userId) return;
 
+    const id = ++globalChannelId;
     const channel: RealtimeChannel = supabase
-      .channel(`nudges:${userId}`)
+      .channel(`nudges:${userId}:${id}`)
       .on(
         'postgres_changes',
         {
@@ -208,7 +163,6 @@ export function useNudgesRealtime(userId?: string) {
         (payload) => {
           console.log('Nudge received:', payload);
           queryClient.invalidateQueries({ queryKey: ['nudges', userId] });
-          // Could show a toast notification here
         }
       )
       .subscribe();
@@ -224,9 +178,9 @@ export function useNudgesRealtime(userId?: string) {
  */
 export function useRealtimeStatus() {
   const [status, setStatus] = useState<'SUBSCRIBED' | 'CLOSED' | 'CHANNEL_ERROR'>('CLOSED');
-
   useEffect(() => {
-    const channel = supabase.channel('status-check');
+    const id = ++globalChannelId;
+    const channel = supabase.channel(`status-check:${id}`);
 
     channel.on('system', {}, (payload) => {
       if (payload.extension === 'postgres_changes') {
@@ -245,3 +199,8 @@ export function useRealtimeStatus() {
 
   return status;
 }
+
+// Backward-compatible aliases
+export const useMessagesRealtime = useChatMessagesRealtime;
+export const useConversationsRealtime = useChatsRealtime;
+export const useCircleMessagesRealtime = useChatMessagesRealtime;

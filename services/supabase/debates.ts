@@ -2,9 +2,9 @@ import { supabase } from '../../lib/supabase';
 
 export interface DebateReaction {
   id: string;
-  circle_response_id: string;
+  response_id: string;
   user_id: string;
-  reaction_type: 'tomato' | 'boost';
+  emoji: string;
   created_at: string;
 }
 
@@ -54,11 +54,6 @@ export interface DebateStats {
 }
 
 export const debatesService = {
-  /**
-   * Toggle a debate reaction (boost 🚀 or tomato 🍅)
-   * If the same reaction exists, it will be removed
-   * If a different reaction exists, it will be updated
-   */
   async toggleDebateReaction(
     responseId: string,
     userId: string,
@@ -78,9 +73,6 @@ export const debatesService = {
     return data;
   },
 
-  /**
-   * Get debate statistics and leaderboards for a prompt
-   */
   async getDebateStats(promptId: string): Promise<DebateStats> {
     const { data, error } = await supabase.rpc('get_debate_stats', {
       p_prompt_id: promptId,
@@ -94,14 +86,11 @@ export const debatesService = {
     return data;
   },
 
-  /**
-   * Get reactions for a specific response
-   */
   async getResponseReactions(responseId: string): Promise<DebateReaction[]> {
     const { data, error } = await supabase
-      .from('debate_reactions')
+      .from('reactions')
       .select('*')
-      .eq('circle_response_id', responseId);
+      .eq('response_id', responseId);
 
     if (error) {
       console.error('Get response reactions error:', error);
@@ -111,21 +100,18 @@ export const debatesService = {
     return data || [];
   },
 
-  /**
-   * Get all responses for a debate prompt grouped by side
-   */
   async getDebateResponses(promptId: string): Promise<{
     sideA: any[];
     sideB: any[];
   }> {
     const { data, error } = await supabase
-      .from('circle_responses')
+      .from('responses')
       .select(`
         *,
         user:profiles(*),
-        reactions:debate_reactions(*)
+        reactions:reactions(*)
       `)
-      .eq('circle_prompt_id', promptId)
+      .eq('prompt_id', promptId)
       .not('debate_side', 'is', null)
       .order('created_at', { ascending: false });
 
@@ -140,21 +126,19 @@ export const debatesService = {
     return { sideA, sideB };
   },
 
-  /**
-   * Create a new debate prompt
-   */
   async createDebatePrompt(
-    circleId: string,
+    chatId: string,
     createdBy: string,
     sideA: string,
     sideB: string
   ): Promise<any> {
     const { data, error } = await supabase
-      .from('circle_prompts')
+      .from('prompts')
       .insert({
-        circle_id: circleId,
+        chat_id: chatId,
         created_by: createdBy,
         text: `Debate: ${sideA} vs ${sideB}`,
+        type: 'debate',
         is_debate: true,
         debate_side_a: sideA,
         debate_side_b: sideB,
@@ -170,11 +154,7 @@ export const debatesService = {
     return data;
   },
 
-  /**
-   * Submit a response to a debate (must choose a side)
-   */
   async submitDebateResponse(
-    circleId: string,
     promptId: string,
     userId: string,
     side: 'side_a' | 'side_b',
@@ -183,10 +163,9 @@ export const debatesService = {
     mediaType?: 'image' | 'video' | null
   ): Promise<any> {
     const { data, error } = await supabase
-      .from('circle_responses')
+      .from('responses')
       .insert({
-        circle_id: circleId,
-        circle_prompt_id: promptId,
+        prompt_id: promptId,
         user_id: userId,
         debate_side: side,
         text_content: textContent,

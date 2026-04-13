@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { promptsService } from '../services/supabase/prompts';
 
 export function useTodaysPrompt() {
@@ -39,5 +39,41 @@ export function useGeneralPrompts() {
   return useQuery({
     queryKey: ['prompts', 'general'],
     queryFn: () => promptsService.getGeneralPrompts(),
+  });
+}
+
+export function useCreatePrompt() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (text: string) => promptsService.createPrompt(text),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['prompts'] });
+    },
+  });
+}
+
+// --- Optional prompts (absorbed from useOptionalPrompts) ---
+
+export function useRandomPrompts(limit: number = 5) {
+  return useQuery({
+    queryKey: ['prompts', 'optional', 'random', limit],
+    queryFn: () => promptsService.getRandomOptionalPrompts(limit),
+  });
+}
+
+export function useOptionalPrompt(promptId?: string) {
+  return useQuery({
+    queryKey: ['prompt', promptId],
+    queryFn: () => promptsService.getOptionalPromptById(promptId!),
+    enabled: !!promptId,
+  });
+}
+
+export function usePromptsByCategory(category?: string) {
+  return useQuery({
+    queryKey: ['prompts', 'optional', 'category', category],
+    queryFn: () => promptsService.getPromptsByCategory(category!),
+    enabled: !!category,
   });
 }

@@ -39,7 +39,7 @@ export function DebateCreationModal({ visible, onClose, circleId }: DebateCreati
     try {
       setCreating(true);
       await createDebate.mutateAsync({
-        circleId,
+        chatId: circleId,
         createdBy: user.id,
         sideA: sideA.trim(),
         sideB: sideB.trim(),

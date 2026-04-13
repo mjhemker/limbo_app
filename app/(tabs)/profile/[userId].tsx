@@ -166,8 +166,8 @@ export default function ProfileViewPage() {
   }
 
   // Separate optional prompt responses from regular responses
-  const optionalResponses = responses?.filter((r: any) => r.optional_prompt_id) || [];
-  const regularResponses = responses?.filter((r: any) => r.prompt_id && !r.optional_prompt_id) || [];
+  const optionalResponses = responses?.filter((r: any) => r.prompt?.type === 'optional') || [];
+  const regularResponses = responses?.filter((r: any) => r.prompt?.type !== 'optional') || [];
   const pinnedResponses = regularResponses?.filter((r: any) => r.is_pinned) || [];
   const displayedResponses = viewMode === 'pinned' ? pinnedResponses : regularResponses || [];
 
@@ -393,7 +393,7 @@ export default function ProfileViewPage() {
                         shareResponse({
                           text: response.text_content,
                           mediaUrl: response.media_url,
-                          promptText: response.prompt?.text || response.optional_prompt?.text,
+                          promptText: response.prompt?.text,
                           userName: profile?.display_name,
                         });
                       }}

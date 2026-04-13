@@ -1,5 +1,5 @@
-import { Tabs } from 'expo-router';
-import { Home, MessageCircle, Circle, User } from 'lucide-react-native';
+import { Tabs, useSegments } from 'expo-router';
+import { Home, MessageCircle, User } from 'lucide-react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '../../contexts/AuthContext';
 import { useUnreadCount } from '../../hooks/useMessages';
@@ -9,6 +9,24 @@ export default function TabLayout() {
   const insets = useSafeAreaInsets();
   const { user } = useAuth();
   const { data: unreadCount } = useUnreadCount(user?.id);
+  const segments = useSegments();
+
+  // Hide tab bar when inside a chat detail screen
+  // segments looks like ['(tabs)', 'messages', '[userId]'] or ['(tabs)', 'circles', '[id]']
+  const inChatDetail =
+    (segments.includes('messages') && segments.length > 2 && segments[segments.length - 1] !== 'index') ||
+    (segments.includes('circles') && segments.length > 2 && segments[segments.length - 1] !== 'index');
+
+  const tabBarStyle = inChatDetail
+    ? { display: 'none' as const }
+    : {
+        backgroundColor: '#ffffff',
+        borderTopColor: '#e5e7eb',
+        borderTopWidth: 1,
+        paddingBottom: insets.bottom > 0 ? insets.bottom : 8,
+        paddingTop: 8,
+        height: insets.bottom > 0 ? 60 + insets.bottom : 60,
+      };
 
   return (
     <Tabs
@@ -16,14 +34,7 @@ export default function TabLayout() {
         headerShown: false,
         tabBarActiveTintColor: COLORS.primary,
         tabBarInactiveTintColor: '#9ca3af',
-        tabBarStyle: {
-          backgroundColor: '#ffffff',
-          borderTopColor: '#e5e7eb',
-          borderTopWidth: 1,
-          paddingBottom: insets.bottom > 0 ? insets.bottom : 8,
-          paddingTop: 8,
-          height: insets.bottom > 0 ? 60 + insets.bottom : 60,
-        },
+        tabBarStyle,
         tabBarLabelStyle: {
           fontSize: 11,
           fontWeight: '500',
@@ -45,7 +56,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="messages"
         options={{
-          title: 'Messages',
+          title: 'Chat',
           tabBarIcon: ({ color, focused }) => (
             <MessageCircle color={color} size={24} strokeWidth={focused ? 2.5 : 2} />
           ),
@@ -62,10 +73,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="circles"
         options={{
-          title: 'Circles',
-          tabBarIcon: ({ color, focused }) => (
-            <Circle color={color} size={24} strokeWidth={focused ? 2.5 : 2} />
-          ),
+          href: null,
         }}
       />
       <Tabs.Screen

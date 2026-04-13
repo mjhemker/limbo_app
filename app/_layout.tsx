@@ -48,8 +48,9 @@ function AppContent() {
       <Stack.Screen
         name="compose"
         options={{
-          presentation: 'modal',
+          presentation: 'card',
           headerShown: false,
+          animation: 'slide_from_bottom',
         }}
       />
       <Stack.Screen name="auth" options={{ headerShown: false }} />

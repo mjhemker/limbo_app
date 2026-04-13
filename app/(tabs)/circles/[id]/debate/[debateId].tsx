@@ -21,7 +21,7 @@ import {
   useToggleDebateReaction,
   useSubmitDebateResponse,
 } from '../../../../../hooks/useDebates';
-import { useCirclePrompts } from '../../../../../hooks/useCircles';
+import { useChatPrompts as useCirclePrompts } from '../../../../../hooks/useChats';
 import { toast } from '../../../../../utils/toast';
 
 export default function DebatePage() {
@@ -107,7 +107,6 @@ export default function DebatePage() {
     try {
       setSubmitting(true);
       await submitResponse.mutateAsync({
-        circleId,
         promptId: debateId,
         userId: user.id,
         side: selectedSide,

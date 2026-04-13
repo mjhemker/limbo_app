@@ -4,7 +4,7 @@ import { useRouter } from 'expo-router';
 import { Plus, Users } from 'lucide-react-native';
 import { useState } from 'react';
 import { useAuth } from '../../../contexts/AuthContext';
-import { useMyCircles } from '../../../hooks/useCircles';
+import { useMyGroupChats as useMyCircles } from '../../../hooks/useChats';
 import { CircleCreationModal } from '../../../components/circles/CircleCreationModal';
 
 export default function CirclesPage() {

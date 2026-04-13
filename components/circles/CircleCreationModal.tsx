@@ -14,7 +14,7 @@ import {
 import { X, Camera, Check } from 'lucide-react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { useAuth } from '../../contexts/AuthContext';
-import { useCreateCircle } from '../../hooks/useCircles';
+import { useCreateGroupChat as useCreateCircle } from '../../hooks/useChats';
 import { toast } from '../../utils/toast';
 import { COLORS } from '../../lib/constants';
 

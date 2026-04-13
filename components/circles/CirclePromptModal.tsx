@@ -11,7 +11,7 @@ import {
 } from 'react-native';
 import { X } from 'lucide-react-native';
 import { useAuth } from '../../contexts/AuthContext';
-import { useCreateCirclePrompt } from '../../hooks/useCircles';
+import { useCreateChatPrompt as useCreateCirclePrompt } from '../../hooks/useChats';
 import { toast } from '../../utils/toast';
 
 interface CirclePromptModalProps {
@@ -38,7 +38,7 @@ export function CirclePromptModal({ visible, onClose, circleId }: CirclePromptMo
     try {
       setCreating(true);
       await createPrompt.mutateAsync({
-        circleId,
+        chatId: circleId,
         text: promptText.trim(),
         createdBy: user.id,
       });

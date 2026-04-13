@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -13,22 +13,39 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
-import { X, Image as ImageIcon, Video, Mic, ArrowLeft, Type, Camera } from 'lucide-react-native';
+import { X, Image as ImageIcon, Mic, ArrowLeft, Type, Camera } from 'lucide-react-native';
+import { DrawingCanvas } from '../components/chat/DrawingCanvas';
+import { captureRef } from 'react-native-view-shot';
 import { useAuth } from '../contexts/AuthContext';
-import { useTodaysPrompt } from '../hooks/usePrompt';
+import { useTodaysPrompt, usePrompt } from '../hooks/usePrompt';
 import { useUserResponse, useCreateResponse, useUpdateResponse } from '../hooks/useResponses';
 import AudioRecorder from '../components/media/AudioRecorder';
-import { validateImageFile, validateVideoFile, validateAudioFile, formatFileSize } from '../utils/mediaValidation';
+import { validateImageFile, validateVideoFile, validateAudioFile } from '../utils/mediaValidation';
 import { toast } from '../utils/toast';
 import * as haptics from '../utils/haptics';
+
+type ResponseMode = 'text' | 'image' | 'audio' | 'draw';
 
 export default function ComposePage() {
   const router = useRouter();
   const { user } = useAuth();
-  const { data: todaysPrompt, isLoading: promptLoading } = useTodaysPrompt();
-  const { data: existingResponse, isLoading: responseLoading } = useUserResponse(user?.id, todaysPrompt?.id);
+  const params = useLocalSearchParams<{ promptId?: string; promptText?: string; promptType?: string; senderName?: string; options?: string; backgroundImage?: string }>();
+
+  // If promptText is passed, this is a chat prompt. Otherwise load today's prompt.
+  const isDailyPrompt = !params.promptText;
+  const debateOptions: string[] = params.options ? JSON.parse(params.options) : [];
+  const drawingViewRef = useRef<View>(null);
+  const { data: todaysPrompt, isLoading: todayLoading } = useTodaysPrompt();
+  const { data: paramPrompt, isLoading: paramLoading } = usePrompt(params.promptId);
+
+  const prompt = params.promptId ? paramPrompt : todaysPrompt;
+  const promptText = params.promptText || prompt?.text;
+  const promptType = (params.promptType as 'basic' | 'debate' | 'draw') || 'basic';
+  const promptLoading = params.promptId ? paramLoading : todayLoading;
+
+  const { data: existingResponse, isLoading: responseLoading } = useUserResponse(user?.id, prompt?.id);
   const createResponse = useCreateResponse();
   const updateResponse = useUpdateResponse();
 
@@ -38,7 +55,15 @@ export default function ComposePage() {
   const [audioUri, setAudioUri] = useState<string | null>(null);
   const [isVisible, setIsVisible] = useState(true);
   const [loading, setLoading] = useState(false);
-  const [activeTab, setActiveTab] = useState<'text' | 'image' | 'audio'>('text');
+  const [activeTab, setActiveTab] = useState<ResponseMode>('text');
+  const [selectedOption, setSelectedOption] = useState<number | null>(null);
+  const [defendText, setDefendText] = useState('');
+  const [hasDrawing, setHasDrawing] = useState(false);
+
+  // Set default tab based on prompt type
+  useEffect(() => {
+    if (promptType === 'draw') setActiveTab('draw');
+  }, [promptType]);
 
   useEffect(() => {
     if (existingResponse) {
@@ -70,7 +95,6 @@ export default function ComposePage() {
       const asset = result.assets[0];
       const isVideo = asset.type === 'video';
 
-      // Validate file size
       const fileToValidate = {
         uri: asset.uri,
         type: isVideo ? 'video/mp4' : 'image/jpeg',
@@ -84,11 +108,6 @@ export default function ComposePage() {
       if (!validation.valid) {
         toast.error(validation.error || 'File validation failed');
         return;
-      }
-
-      // Show file size info
-      if (validation.fileSizeFormatted) {
-        toast.info(`File size: ${validation.fileSizeFormatted}`);
       }
 
       setMediaUri(asset.uri);
@@ -113,7 +132,6 @@ export default function ComposePage() {
       const asset = result.assets[0];
       const isVideo = asset.type === 'video';
 
-      // Validate file size
       const fileToValidate = {
         uri: asset.uri,
         type: isVideo ? 'video/mp4' : 'image/jpeg',
@@ -129,11 +147,6 @@ export default function ComposePage() {
         return;
       }
 
-      // Show file size info
-      if (validation.fileSizeFormatted) {
-        toast.info(`File size: ${validation.fileSizeFormatted}`);
-      }
-
       setMediaUri(asset.uri);
       setMediaType(isVideo ? 'video' : 'image');
       setActiveTab('image');
@@ -141,28 +154,52 @@ export default function ComposePage() {
   };
 
   const handlePost = async () => {
-    if (!textContent && !mediaUri && !audioUri) {
+    if (isDebate) {
+      if (selectedOption === null) {
+        Alert.alert('Error', 'Please select an option');
+        return;
+      }
+    } else if (isDraw) {
+      if (!hasDrawing) {
+        Alert.alert('Error', 'Please draw something first');
+        return;
+      }
+    } else if (!textContent && !mediaUri && !audioUri) {
       Alert.alert('Error', 'Please add some content to your response');
       return;
     }
 
-    if (!user || !todaysPrompt) {
+    if (!user || !prompt) {
       Alert.alert('Error', 'Missing user or prompt data');
       return;
     }
 
     setLoading(true);
     try {
-      // Validate and prepare media file
+      // Capture drawing as image
+      let drawingUri: string | null = null;
+      if (isDraw && hasDrawing && drawingViewRef.current) {
+        try {
+          drawingUri = await captureRef(drawingViewRef, {
+            format: 'png',
+            quality: 1,
+          });
+        } catch (e) {
+          console.error('Failed to capture drawing:', e);
+        }
+      }
+
       let mediaFile = undefined;
-      if (mediaUri) {
+      const effectiveMediaUri = drawingUri || mediaUri;
+      const effectiveMediaType = drawingUri ? 'image' as const : mediaType;
+      if (effectiveMediaUri) {
         const file = {
-          uri: mediaUri,
-          type: mediaType === 'video' ? 'video/mp4' : 'image/jpeg',
-          name: mediaType === 'video' ? 'video.mp4' : 'image.jpg',
+          uri: effectiveMediaUri,
+          type: effectiveMediaType === 'video' ? 'video/mp4' : 'image/png',
+          name: effectiveMediaType === 'video' ? 'video.mp4' : 'drawing.png',
         };
 
-        const validation = mediaType === 'video'
+        const validation = effectiveMediaType === 'video'
           ? await validateVideoFile(file)
           : await validateImageFile(file);
 
@@ -175,7 +212,6 @@ export default function ComposePage() {
         mediaFile = file;
       }
 
-      // Validate and prepare audio file
       let audioFile = undefined;
       if (audioUri) {
         const file = {
@@ -195,11 +231,16 @@ export default function ComposePage() {
         audioFile = file;
       }
 
+      // For debate, encode the selected option + defend text
+      const responseText = isDebate
+        ? JSON.stringify({ option: selectedOption, optionLabel: debateOptions[selectedOption!], defend: defendText.trim() })
+        : textContent;
+
       if (existingResponse) {
         await updateResponse.mutateAsync({
           responseId: existingResponse.id,
           userId: user.id,
-          textContent,
+          textContent: responseText,
           mediaFile,
           audioFile,
           isVisible,
@@ -209,8 +250,8 @@ export default function ComposePage() {
       } else {
         await createResponse.mutateAsync({
           userId: user.id,
-          promptId: todaysPrompt.id,
-          textContent,
+          promptId: prompt.id,
+          textContent: responseText,
           mediaFile,
           audioFile,
           isVisible,
@@ -227,8 +268,7 @@ export default function ComposePage() {
     }
   };
 
-  const hasContent = textContent || mediaUri || audioUri;
-  const isLoading = promptLoading || responseLoading;
+  const hasContent = isDebate ? selectedOption !== null : isDraw ? hasDrawing : (textContent || mediaUri || audioUri);
 
   if (promptLoading) {
     return (
@@ -239,14 +279,13 @@ export default function ComposePage() {
           </TouchableOpacity>
         </View>
         <View className="flex-1 items-center justify-center">
-          <ActivityIndicator size="large" color="#FFBF00" />
-          <Text className="text-gray-500 mt-4">Loading prompt...</Text>
+          <ActivityIndicator size="large" color="#000" />
         </View>
       </SafeAreaView>
     );
   }
 
-  if (!todaysPrompt) {
+  if (!promptText) {
     return (
       <SafeAreaView edges={['top']} className="flex-1 bg-white">
         <View className="flex-row items-center px-5 py-4 border-b border-gray-100">
@@ -256,15 +295,27 @@ export default function ComposePage() {
         </View>
         <View className="flex-1 items-center justify-center px-6">
           <Text className="text-xl font-bold text-gray-900 text-center mb-2">
-            No prompt today
+            No prompt available
           </Text>
           <Text className="text-gray-600 text-center">
-            Check back tomorrow for a new daily prompt!
+            Check back later!
           </Text>
         </View>
       </SafeAreaView>
     );
   }
+
+  // Determine which tabs to show based on prompt type
+  const isDebate = promptType === 'debate';
+  const isDraw = promptType === 'draw';
+
+  // Available tabs for each type
+  const tabs: { key: ResponseMode; label: string; icon: any }[] = isDraw
+    ? [{ key: 'draw', label: 'Draw', icon: null }]
+    : [
+        { key: 'text', label: 'Text', icon: Type },
+        { key: 'image', label: 'Photo', icon: ImageIcon },
+      ];
 
   return (
     <SafeAreaView edges={['top']} className="flex-1 bg-white">
@@ -275,261 +326,177 @@ export default function ComposePage() {
         <View className="flex-1">
           {/* Header */}
           <View className="px-5 pt-4 pb-3 border-b border-gray-100">
-            <View className="flex-row items-center justify-between mb-3">
+            <View className="flex-row items-center justify-between">
               <TouchableOpacity onPress={() => router.back()}>
                 <ArrowLeft size={24} color="#000" />
               </TouchableOpacity>
               <Text className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
-                Today's Prompt
+                {isDailyPrompt ? "Today's Prompt" : params.senderName ? `Prompt by ${params.senderName}` : 'Prompt'}
               </Text>
               <View className="w-6" />
             </View>
-            <Text className="text-xl font-bold text-black">
-              {todaysPrompt.text}
-            </Text>
           </View>
 
-        <ScrollView className="flex-1" contentContainerStyle={{ paddingBottom: 20 }}>
-          {/* Response Preview Card */}
-          <View className="px-5 py-4">
-            <View
-              className="bg-black rounded-3xl overflow-hidden"
-              style={{ aspectRatio: 4/3 }}
-            >
-              {activeTab === 'text' && (
-                <View className="flex-1 p-6 justify-center">
-                  <TextInput
-                    className="flex-1 text-white text-lg text-center"
-                    placeholder="Type your response..."
-                    placeholderTextColor="#6b7280"
-                    value={textContent}
-                    onChangeText={setTextContent}
-                    multiline
-                    textAlignVertical="center"
-                    editable={!loading}
-                  />
-                </View>
-              )}
+          <ScrollView className="flex-1" contentContainerStyle={{ paddingBottom: 20 }} scrollEnabled={!isDraw}>
+            {/* Prompt text */}
+            <View className="px-8 py-5">
+              <Text className="text-xl font-bold text-black text-center">
+                {isDebate ? params.promptText : promptText}
+              </Text>
+            </View>
 
-              {activeTab === 'image' && (
-                <>
-                  {mediaUri ? (
-                    <>
-                      <Image
-                        source={{ uri: mediaUri }}
-                        className="w-full h-full"
-                        resizeMode="cover"
-                      />
-                      {textContent && (
-                        <View className="absolute bottom-0 left-0 right-0 p-4" style={{ backgroundColor: 'rgba(0,0,0,0.6)' }}>
-                          <Text className="text-white text-base text-center">
-                            {textContent}
-                          </Text>
-                        </View>
-                      )}
-                      <TouchableOpacity
-                        onPress={() => {
-                          setMediaUri(null);
-                          setMediaType(null);
-                        }}
-                        className="absolute top-4 right-4 bg-black/50 rounded-full p-2"
-                      >
-                        <X size={20} color="white" />
-                      </TouchableOpacity>
-                    </>
-                  ) : (
-                    <View className="flex-1 items-center justify-center">
-                      <View className="flex-row gap-8">
+            {isDebate ? (
+              /* ===== DEBATE POLL UI ===== */
+              <View className="px-5 pt-4">
+                <Text className="text-sm font-semibold text-gray-500 mb-4">Pick your side</Text>
+                {debateOptions.map((option, index) => {
+                  const isSelected = selectedOption === index;
+                  return (
+                    <TouchableOpacity
+                      key={index}
+                      onPress={() => setSelectedOption(index)}
+                      className={`flex-row items-center p-4 rounded-2xl mb-3 border-2 ${
+                        isSelected ? 'border-black bg-gray-50' : 'border-gray-200 bg-white'
+                      }`}
+                      activeOpacity={0.7}
+                    >
+                      <View className={`w-8 h-8 rounded-full border-2 items-center justify-center mr-3 ${
+                        isSelected ? 'border-black bg-black' : 'border-gray-300'
+                      }`}>
+                        {isSelected && (
+                          <View className="w-3 h-3 rounded-full bg-white" />
+                        )}
+                      </View>
+                      <Text className="text-sm font-bold text-gray-400 mr-2">
+                        {String.fromCharCode(65 + index)}
+                      </Text>
+                      <Text className={`text-base flex-1 ${isSelected ? 'font-semibold text-black' : 'text-gray-700'}`}>
+                        {option}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                })}
+
+                <View className="mt-4">
+                    <Text className="text-sm font-semibold text-gray-500 mb-2">Defend your pick (optional)</Text>
+                    <TextInput
+                      className="bg-gray-50 border border-gray-200 rounded-2xl px-4 py-3 text-base min-h-[100px]"
+                      placeholder="Why did you choose this option?"
+                      placeholderTextColor="#9ca3af"
+                      value={defendText}
+                      onChangeText={setDefendText}
+                      multiline
+                      textAlignVertical="top"
+                      maxLength={500}
+                      editable={!loading}
+                    />
+                    <Text className="text-xs text-gray-400 mt-1 text-right">
+                      {defendText.length}/500
+                    </Text>
+                  </View>
+              </View>
+            ) : (
+              /* ===== STANDARD RESPONSE UI ===== */
+              <>
+                {isDraw ? (
+                  /* Draw Canvas */
+                  <View className="px-5 py-4 items-center" ref={drawingViewRef} collapsable={false}>
+                    <DrawingCanvas
+                      backgroundImageUri={params.backgroundImage}
+                      onDrawingChange={setHasDrawing}
+                    />
+                  </View>
+                ) : (
+                  /* ===== BASIC RESPONSE: image + text ===== */
+                  <View className="px-5">
+                    {/* Image upload */}
+                    {mediaUri ? (
+                      <View className="w-full rounded-2xl overflow-hidden mb-4" style={{ aspectRatio: 4 / 3 }}>
+                        <Image
+                          source={{ uri: mediaUri }}
+                          className="w-full h-full"
+                          resizeMode="cover"
+                        />
                         <TouchableOpacity
-                          onPress={takePhoto}
-                          className="items-center"
+                          onPress={() => { setMediaUri(null); setMediaType(null); }}
+                          className="absolute top-3 right-3 bg-black/50 rounded-full p-2"
                         >
-                          <View className="w-16 h-16 rounded-full bg-white/20 items-center justify-center mb-2">
-                            <Camera size={28} color="white" />
-                          </View>
-                          <Text className="text-white text-sm">Camera</Text>
-                        </TouchableOpacity>
-                        <TouchableOpacity
-                          onPress={pickImage}
-                          className="items-center"
-                        >
-                          <View className="w-16 h-16 rounded-full bg-white/20 items-center justify-center mb-2">
-                            <ImageIcon size={28} color="white" />
-                          </View>
-                          <Text className="text-white text-sm">Library</Text>
+                          <X size={18} color="white" />
                         </TouchableOpacity>
                       </View>
-                    </View>
-                  )}
-                </>
-              )}
-
-              {activeTab === 'audio' && (
-                <View className="flex-1 items-center justify-center p-6">
-                  {audioUri ? (
-                    <View className="w-full">
-                      <Mic size={48} color="white" strokeWidth={1.5} className="self-center" />
-                      <Text className="text-white mt-3 text-center">Audio recording</Text>
+                    ) : (
                       <TouchableOpacity
-                        onPress={() => setAudioUri(null)}
-                        className="mt-4 bg-white/20 rounded-full px-4 py-2 self-center"
+                        onPress={pickImage}
+                        className="w-full rounded-2xl border-2 border-dashed border-gray-300 items-center justify-center mb-4"
+                        style={{ aspectRatio: 16 / 9 }}
+                        activeOpacity={0.6}
                       >
-                        <Text className="text-white text-sm">Remove</Text>
+                        <ImageIcon size={28} color="#9ca3af" />
+                        <Text className="text-sm text-gray-400 mt-2">Add a photo (optional)</Text>
                       </TouchableOpacity>
-                      {textContent && (
-                        <Text className="text-white mt-6 text-center text-base">
-                          {textContent}
-                        </Text>
-                      )}
-                    </View>
-                  ) : (
-                    <View className="w-full">
-                      <Mic size={48} color="white" strokeWidth={1.5} className="self-center" />
-                      <Text className="text-white mt-3 mb-4 text-sm text-center">
-                        Record your response
+                    )}
+
+                    {/* Text input */}
+                    <TextInput
+                      className="bg-gray-50 border border-gray-200 rounded-2xl px-4 py-4 text-base min-h-[120px]"
+                      placeholder="Write your response..."
+                      placeholderTextColor="#9ca3af"
+                      value={textContent}
+                      onChangeText={setTextContent}
+                      multiline
+                      textAlignVertical="top"
+                      maxLength={500}
+                      editable={!loading}
+                    />
+                    <Text className="text-xs text-gray-400 mt-1 text-right mb-4">
+                      {textContent.length}/500
+                    </Text>
+                  </View>
+                )}
+              </>
+            )}
+
+            {/* Visibility Toggle — only for daily/feed prompts */}
+            {isDailyPrompt && (
+              <View className="px-5 mb-6">
+                <View className="bg-gray-50 rounded-3xl p-5 border border-gray-200">
+                  <View className="flex-row items-center justify-between">
+                    <View className="flex-1">
+                      <Text className="font-bold text-black mb-1">
+                        Visible to friends
+                      </Text>
+                      <Text className="text-sm text-gray-600">
+                        {isVisible ? 'Friends can see this post' : 'Only you can see this post'}
                       </Text>
                     </View>
-                  )}
+                    <Switch
+                      value={isVisible}
+                      onValueChange={setIsVisible}
+                      disabled={loading}
+                    />
+                  </View>
                 </View>
-              )}
-            </View>
-          </View>
-
-          {/* Tab Buttons */}
-          <View className="px-5 mb-6">
-            <View className="flex-row bg-gray-100 rounded-full p-1">
-              <TouchableOpacity
-                onPress={() => setActiveTab('text')}
-                className={`flex-1 py-3 rounded-full flex-row items-center justify-center ${
-                  activeTab === 'text' ? 'bg-white' : 'bg-transparent'
-                }`}
-                activeOpacity={0.7}
-              >
-                <Type size={18} color={activeTab === 'text' ? '#000' : '#6b7280'} strokeWidth={2} />
-                <Text className={`ml-2 font-semibold ${
-                  activeTab === 'text' ? 'text-black' : 'text-gray-600'
-                }`}>
-                  Text
-                </Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                onPress={() => setActiveTab('image')}
-                className={`flex-1 py-3 rounded-full flex-row items-center justify-center ${
-                  activeTab === 'image' ? 'bg-white' : 'bg-transparent'
-                }`}
-                activeOpacity={0.7}
-              >
-                <ImageIcon size={18} color={activeTab === 'image' ? '#000' : '#6b7280'} strokeWidth={2} />
-                <Text className={`ml-2 font-semibold ${
-                  activeTab === 'image' ? 'text-black' : 'text-gray-600'
-                }`}>
-                  Photo
-                </Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                onPress={() => setActiveTab('audio')}
-                className={`flex-1 py-3 rounded-full flex-row items-center justify-center ${
-                  activeTab === 'audio' ? 'bg-white' : 'bg-transparent'
-                }`}
-                activeOpacity={0.7}
-              >
-                <Mic size={18} color={activeTab === 'audio' ? '#000' : '#6b7280'} strokeWidth={2} />
-                <Text className={`ml-2 font-semibold ${
-                  activeTab === 'audio' ? 'text-black' : 'text-gray-600'
-                }`}>
-                  Audio
-                </Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-
-          {/* Text Input for Image Tab */}
-          {activeTab === 'image' && mediaUri && (
-            <View className="px-5 mb-4">
-              <TextInput
-                className="bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-base"
-                placeholder="Add a caption..."
-                placeholderTextColor="#9ca3af"
-                value={textContent}
-                onChangeText={setTextContent}
-                multiline
-                maxLength={500}
-                editable={!loading}
-              />
-            </View>
-          )}
-
-          {/* Audio Recorder */}
-          {activeTab === 'audio' && !audioUri && (
-            <View className="px-5 mb-6">
-              <AudioRecorder
-                onRecordingComplete={(uri) => {
-                  setAudioUri(uri);
-                }}
-                onRecordingCancelled={() => {
-                  setAudioUri(null);
-                }}
-              />
-            </View>
-          )}
-
-          {/* Text Input for Audio Tab */}
-          {activeTab === 'audio' && (
-            <View className="px-5 mb-6">
-              <TextInput
-                className="bg-gray-50 border border-gray-300 rounded-xl px-4 py-3 text-base min-h-24"
-                placeholder="Add a caption to your audio..."
-                placeholderTextColor="#9ca3af"
-                value={textContent}
-                onChangeText={setTextContent}
-                multiline
-                textAlignVertical="top"
-                editable={!loading}
-              />
-            </View>
-          )}
-
-          {/* Visibility Toggle */}
-          <View className="px-5 mb-6">
-            <View className="bg-gray-50 rounded-3xl p-5 border border-gray-200">
-              <View className="flex-row items-center justify-between">
-                <View className="flex-1">
-                  <Text className="font-bold text-black mb-1">
-                    Visible to friends
-                  </Text>
-                  <Text className="text-sm text-gray-600">
-                    {isVisible ? 'Friends can see this post' : 'Only you can see this post'}
-                  </Text>
-                </View>
-                <Switch
-                  value={isVisible}
-                  onValueChange={setIsVisible}
-                  disabled={loading}
-                />
               </View>
-            </View>
-          </View>
+            )}
 
-          {/* Post Button */}
-          <View className="px-5">
-            <TouchableOpacity
-              onPress={handlePost}
-              disabled={!hasContent || loading}
-              className={`rounded-full py-4 ${
-                hasContent && !loading ? 'bg-black' : 'bg-gray-300'
-              }`}
-              activeOpacity={0.7}
-            >
-              <Text className={`text-center font-bold text-base ${
-                hasContent && !loading ? 'text-white' : 'text-gray-500'
-              }`}>
-                {loading ? 'Posting...' : existingResponse ? 'Update Response' : 'Post Response'}
-              </Text>
-            </TouchableOpacity>
-          </View>
-        </ScrollView>
+            {/* Post Button */}
+            <View className="px-5">
+              <TouchableOpacity
+                onPress={handlePost}
+                disabled={!hasContent || loading}
+                className={`rounded-full py-4 ${
+                  hasContent && !loading ? 'bg-black' : 'bg-gray-300'
+                }`}
+                activeOpacity={0.7}
+              >
+                <Text className={`text-center font-bold text-base ${
+                  hasContent && !loading ? 'text-white' : 'text-gray-500'
+                }`}>
+                  {loading ? 'Posting...' : existingResponse ? 'Update Response' : 'Post Response'}
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </ScrollView>
         </View>
       </KeyboardAvoidingView>
     </SafeAreaView>

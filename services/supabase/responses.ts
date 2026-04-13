@@ -3,28 +3,28 @@ import { supabase } from '../../lib/supabase';
 export interface Response {
   id: string;
   user_id: string;
-  prompt_id?: string;
-  optional_prompt_id?: string;
+  prompt_id: string;
   text_content?: string;
   media_url?: string;
   media_type?: 'image' | 'video';
   audio_url?: string;
   is_visible: boolean;
   is_pinned: boolean;
+  debate_side?: 'side_a' | 'side_b';
   created_at: string;
   updated_at: string;
 }
 
 export interface CreateResponseInput {
   user_id: string;
-  prompt_id?: string;
-  optional_prompt_id?: string;
+  prompt_id: string;
   text_content?: string;
   media_url?: string;
   media_type?: 'image' | 'video';
   audio_url?: string;
   is_visible?: boolean;
   is_pinned?: boolean;
+  debate_side?: 'side_a' | 'side_b';
 }
 
 export const responsesService = {
@@ -33,8 +33,7 @@ export const responsesService = {
       .from('responses')
       .insert({
         user_id: response.user_id,
-        prompt_id: response.prompt_id || null,
-        optional_prompt_id: response.optional_prompt_id || null,
+        prompt_id: response.prompt_id,
         text_content: response.text_content || null,
         media_url: response.media_url || null,
         media_type: response.media_type || null,
@@ -42,6 +41,7 @@ export const responsesService = {
         is_visible:
           response.is_visible !== undefined ? response.is_visible : true,
         is_pinned: response.is_pinned || false,
+        debate_side: response.debate_side || null,
       })
       .select()
       .single();
@@ -66,7 +66,6 @@ export const responsesService = {
       .single();
 
     if (error && error.code !== 'PGRST116') {
-      // PGRST116 = no rows found
       console.error('Get user response error:', error);
       throw error;
     }
@@ -81,7 +80,7 @@ export const responsesService = {
   ): Promise<any[]> {
     const { data, error } = await supabase
       .from('responses')
-      .select('*, prompt:prompts(*), optional_prompt:optional_prompts(*)')
+      .select('*, prompt:prompts(*)')
       .eq('user_id', userId)
       .order('created_at', { ascending: false })
       .range(offset, offset + limit - 1);
@@ -97,7 +96,7 @@ export const responsesService = {
   async getPinnedResponses(userId: string): Promise<any[]> {
     const { data, error } = await supabase
       .from('responses')
-      .select('*, prompt:prompts(*), optional_prompt:optional_prompts(*)')
+      .select('*, prompt:prompts(*)')
       .eq('user_id', userId)
       .eq('is_pinned', true)
       .order('created_at', { ascending: false })
@@ -112,7 +111,6 @@ export const responsesService = {
   },
 
   async getFriendsResponses(promptId: string, userId: string): Promise<any[]> {
-    // Get user's friends first
     const { data: friendships, error: friendsError } = await supabase
       .from('friendships')
       .select('requester_id, addressee_id')
@@ -124,7 +122,6 @@ export const responsesService = {
       throw friendsError;
     }
 
-    // Extract friend IDs
     const friendIds = friendships.map((f) =>
       f.requester_id === userId ? f.addressee_id : f.requester_id
     );
@@ -133,7 +130,6 @@ export const responsesService = {
       return [];
     }
 
-    // Get friends' responses for this prompt
     const { data, error } = await supabase
       .from('responses')
       .select('*, user:profiles(*), prompt:prompts(*)')
@@ -154,8 +150,6 @@ export const responsesService = {
     responseId: string,
     updates: Partial<Response>
   ): Promise<Response> {
-    console.log('Updating response:', { responseId, updates });
-
     const { data, error } = await supabase
       .from('responses')
       .update({
@@ -168,11 +162,9 @@ export const responsesService = {
 
     if (error) {
       console.error('Update response error:', error);
-      console.error('Failed to update response ID:', responseId);
       throw error;
     }
 
-    console.log('Update successful:', data);
     return data;
   },
 
@@ -200,7 +192,6 @@ export const responsesService = {
     isPinned: boolean,
     userId: string
   ): Promise<Response> {
-    // Check if user already has 6 pinned responses
     if (isPinned) {
       const { count } = await supabase
         .from('responses')
@@ -220,8 +211,7 @@ export const responsesService = {
     const { data, error } = await supabase
       .from('responses')
       .select('prompt_id')
-      .eq('user_id', userId)
-      .not('prompt_id', 'is', null);
+      .eq('user_id', userId);
 
     if (error) {
       console.error('Get answered prompt IDs error:', error);
@@ -229,5 +219,46 @@ export const responsesService = {
     }
 
     return (data || []).map((r) => r.prompt_id).filter(Boolean) as string[];
+  },
+
+  // --- Circle/chat response methods (absorbed from circlesService) ---
+
+  async submitChatResponse(
+    promptId: string,
+    userId: string,
+    textContent: string,
+    mediaUrl: string | null = null,
+    mediaType: 'image' | 'video' | null = null,
+    debateSide: 'side_a' | 'side_b' | null = null
+  ): Promise<any> {
+    const { data, error } = await supabase
+      .from('responses')
+      .upsert(
+        {
+          prompt_id: promptId,
+          user_id: userId,
+          text_content: textContent,
+          media_url: mediaUrl,
+          media_type: mediaType,
+          debate_side: debateSide,
+        },
+        { onConflict: 'prompt_id,user_id' }
+      )
+      .select('*, user:profiles(*)')
+      .single();
+
+    if (error) throw error;
+    return data;
+  },
+
+  async getPromptResponses(promptId: string): Promise<any[]> {
+    const { data, error } = await supabase
+      .from('responses')
+      .select('*, user:profiles(*)')
+      .eq('prompt_id', promptId)
+      .order('created_at', { ascending: true });
+
+    if (error) throw error;
+    return data || [];
   },
 };

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { View, Text, TouchableOpacity, Image, Modal, TextInput, Alert, ActivityIndicator } from 'react-native';
 import { Plus, X, Shuffle } from 'lucide-react-native';
-import { useRandomPrompts } from '../../hooks/useOptionalPrompts';
+import { useRandomPrompts } from '../../hooks/usePrompt';
 import { useCreateResponse } from '../../hooks/useResponses';
 import { useAuth } from '../../contexts/AuthContext';
 import * as haptics from '../../utils/haptics';
@@ -28,7 +28,7 @@ export function OptionalPromptsSection({
   const createResponse = useCreateResponse();
 
   // Filter out prompts that user has already answered
-  const answeredPromptIds = new Set(optionalResponses.map((r) => r.optional_prompt_id));
+  const answeredPromptIds = new Set(optionalResponses.map((r) => r.prompt_id));
   const availablePrompts = randomPrompts?.filter((p) => !answeredPromptIds.has(p.id)) || [];
 
   const handleSelectPrompt = (prompt: any) => {
@@ -52,7 +52,7 @@ export function OptionalPromptsSection({
 
       await createResponse.mutateAsync({
         userId: user.id,
-        optionalPromptId: selectedPrompt.id,
+        promptId: selectedPrompt.id,
         textContent: answerText.trim(),
       });
 
@@ -99,7 +99,7 @@ export function OptionalPromptsSection({
               className="bg-gray-50 rounded-2xl p-4 mb-3 border border-gray-200"
             >
               <Text className="text-sm font-semibold text-gray-700 mb-2">
-                {response.optional_prompt?.text || 'Prompt'}
+                {response.prompt?.text || 'Prompt'}
               </Text>
               <Text className="text-base text-black">
                 {response.text_content}
