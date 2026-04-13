@@ -13,18 +13,28 @@
       "backgroundColor": "#111827"
     },
     "ios": {
-      "bundleIdentifier": "com.limbo.app",
+      "bundleIdentifier": "com.limbosocial.app",
+      "buildNumber": "4",
       "supportsTablet": true,
+      "splash": {
+        "image": "./assets/splash-icon.png",
+        "resizeMode": "contain",
+        "backgroundColor": "#111827",
+        "tabletImage": "./assets/splash-icon.png"
+      },
       "infoPlist": {
         "NSCameraUsageDescription": "Take photos and videos for your responses",
         "NSPhotoLibraryUsageDescription": "Choose photos and videos for your responses",
         "NSMicrophoneUsageDescription": "Record audio for your responses",
-        "NSPhotoLibraryAddUsageDescription": "Save photos and videos to your library"
+        "NSPhotoLibraryAddUsageDescription": "Save photos and videos to your library",
+        "ITSAppUsesNonExemptEncryption": false
       },
-      "associatedDomains": ["applinks:limbo.social"]
+      "associatedDomains": [
+        "applinks:limbo.social"
+      ]
     },
     "android": {
-      "package": "com.limbo.app",
+      "package": "com.limbosocial.app",
       "permissions": [
         "CAMERA",
         "READ_EXTERNAL_STORAGE",
@@ -47,7 +57,10 @@
             "host": "limbo.social",
             "pathPrefix": "/invite"
           },
-          "category": ["BROWSABLE", "DEFAULT"]
+          "category": [
+            "BROWSABLE",
+            "DEFAULT"
+          ]
         }
       ]
     },
@@ -64,15 +77,17 @@
           "icon": "./assets/notification-icon.png",
           "color": "#111827"
         }
-      ]
+      ],
+      "expo-asset"
     ],
     "extra": {
       "router": {
         "origin": false
       },
       "eas": {
-        "projectId": "your-project-id"
+        "projectId": "cef79c8c-f8ec-4213-a015-16e3ee1d38d2"
       }
-    }
+    },
+    "owner": "mjhemker"
   }
 }

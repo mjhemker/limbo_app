@@ -1,30 +1,50 @@
 import { useState, useEffect } from 'react';
-import { View, Text } from 'react-native';
-import NetInfo from '@react-native-community/netinfo';
+import { View, Text, Platform } from 'react-native';
 import Animated, {
-  useSharedValue,
-  useAnimatedStyle,
-  withTiming,
   SlideInDown,
   SlideOutUp,
 } from 'react-native-reanimated';
 import { WifiOff } from 'lucide-react-native';
 
+// Lazy load NetInfo to prevent potential crashes
+let NetInfo: any;
+try {
+  NetInfo = require('@react-native-community/netinfo').default;
+} catch (e) {
+  console.warn('NetInfo not available:', e);
+}
+
 export function OfflineIndicator() {
   const [isOffline, setIsOffline] = useState(false);
 
   useEffect(() => {
-    // Subscribe to network state changes
-    const unsubscribe = NetInfo.addEventListener((state) => {
-      setIsOffline(!state.isConnected || !state.isInternetReachable);
-    });
+    if (!NetInfo) return;
 
-    // Get initial state
-    NetInfo.fetch().then((state) => {
-      setIsOffline(!state.isConnected || !state.isInternetReachable);
-    });
+    let unsubscribe: (() => void) | undefined;
 
-    return unsubscribe;
+    try {
+      // Subscribe to network state changes
+      unsubscribe = NetInfo.addEventListener((state: any) => {
+        setIsOffline(!state.isConnected || !state.isInternetReachable);
+      });
+
+      // Get initial state
+      NetInfo.fetch().then((state: any) => {
+        setIsOffline(!state.isConnected || !state.isInternetReachable);
+      }).catch(() => {
+        // Ignore fetch errors
+      });
+    } catch (e) {
+      console.warn('NetInfo initialization error:', e);
+    }
+
+    return () => {
+      try {
+        unsubscribe?.();
+      } catch (e) {
+        // Ignore cleanup errors
+      }
+    };
   }, []);
 
   if (!isOffline) {

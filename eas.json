@@ -13,15 +13,10 @@
     "preview": {
       "distribution": "internal",
       "ios": {
-        "simulator": false,
-        "bundleIdentifier": "com.limbo.app"
+        "simulator": false
       }
     },
     "production": {
-      "ios": {
-        "bundleIdentifier": "com.limbo.app",
-        "buildNumber": "1"
-      },
       "env": {
         "EXPO_PUBLIC_ENV": "production"
       }
@@ -30,9 +25,9 @@
   "submit": {
     "production": {
       "ios": {
-        "appleId": "your-apple-id@example.com",
-        "ascAppId": "your-asc-app-id",
-        "appleTeamId": "your-team-id"
+        "appleId": "mjhemker@gmail.com",
+        "ascAppId": "6761860053",
+        "appleTeamId": "GP64RJ3BHW"
       }
     }
   }

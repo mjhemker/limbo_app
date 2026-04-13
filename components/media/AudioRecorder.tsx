@@ -10,16 +10,22 @@ import Animated, {
   cancelAnimation,
 } from 'react-native-reanimated';
 
-// Try to import expo-av, but handle if it's not available
-let Audio: any = null;
-let isAudioAvailable = false;
+// Lazy load expo-audio to prevent crashes on unsupported devices
+let useAudioRecorder: any;
+let useAudioPlayer: any;
+let AudioModule: any;
+let RecordingPresets: any;
+let audioSupported = false;
 
 try {
-  const expoAv = require('expo-av');
-  Audio = expoAv.Audio;
-  isAudioAvailable = true;
+  const expoAudio = require('expo-audio');
+  useAudioRecorder = expoAudio.useAudioRecorder;
+  useAudioPlayer = expoAudio.useAudioPlayer;
+  AudioModule = expoAudio.AudioModule;
+  RecordingPresets = expoAudio.RecordingPresets;
+  audioSupported = true;
 } catch (e) {
-  console.log('expo-av not available');
+  console.warn('expo-audio not available:', e);
 }
 
 interface AudioRecorderProps {
@@ -27,16 +33,18 @@ interface AudioRecorderProps {
   onRecordingCancelled?: () => void;
 }
 
-export default function AudioRecorder({
+function AudioRecorderInner({
   onRecordingComplete,
   onRecordingCancelled,
 }: AudioRecorderProps) {
-  const [recording, setRecording] = useState<any | null>(null);
   const [recordingUri, setRecordingUri] = useState<string | null>(null);
-  const [sound, setSound] = useState<any | null>(null);
-  const [isPlaying, setIsPlaying] = useState(false);
   const [duration, setDuration] = useState(0);
+  const [isRecording, setIsRecording] = useState(false);
   const [audioError, setAudioError] = useState(false);
+  const [durationInterval, setDurationInterval] = useState<NodeJS.Timeout | null>(null);
+
+  const audioRecorder = useAudioRecorder(RecordingPresets?.HIGH_QUALITY);
+  const player = useAudioPlayer(recordingUri ?? '');
 
   const waveScale = useSharedValue(1);
 
@@ -47,40 +55,25 @@ export default function AudioRecorder({
   useEffect(() => {
     return () => {
       // Cleanup on unmount
-      if (recording) {
-        recording.stopAndUnloadAsync();
-      }
-      if (sound) {
-        sound.unloadAsync();
+      if (durationInterval) {
+        clearInterval(durationInterval);
       }
     };
-  }, []);
+  }, [durationInterval]);
 
   const startRecording = async () => {
-    if (!isAudioAvailable || !Audio) {
-      setAudioError(true);
-      return;
-    }
-
     try {
-      const { status } = await Audio.requestPermissionsAsync();
+      const status = await AudioModule.requestRecordingPermissionsAsync();
 
-      if (status !== 'granted') {
+      if (!status.granted) {
         Alert.alert('Permission needed', 'Please grant microphone permission');
         return;
       }
 
-      await Audio.setAudioModeAsync({
-        allowsRecordingIOS: true,
-        playsInSilentModeIOS: true,
-      });
-
-      const { recording: newRecording } = await Audio.Recording.createAsync(
-        Audio.RecordingOptionsPresets.HIGH_QUALITY
-      );
-
-      setRecording(newRecording);
+      audioRecorder.record();
+      setIsRecording(true);
       setRecordingUri(null);
+      setDuration(0);
 
       // Start waveform animation
       waveScale.value = withRepeat(
@@ -96,29 +89,27 @@ export default function AudioRecorder({
       const interval = setInterval(() => {
         setDuration((prev) => prev + 1);
       }, 1000);
-
-      // Store interval ID for cleanup
-      (newRecording as any)._interval = interval;
+      setDurationInterval(interval);
     } catch (error) {
       console.error('Failed to start recording:', error);
+      setAudioError(true);
       Alert.alert('Error', 'Failed to start recording');
     }
   };
 
   const stopRecording = async () => {
-    if (!recording) return;
-
     try {
       // Clear interval
-      if ((recording as any)._interval) {
-        clearInterval((recording as any)._interval);
+      if (durationInterval) {
+        clearInterval(durationInterval);
+        setDurationInterval(null);
       }
 
-      await recording.stopAndUnloadAsync();
-      const uri = recording.getURI();
+      await audioRecorder.stop();
+      const uri = audioRecorder.uri;
 
-      setRecording(null);
-      setRecordingUri(uri);
+      setIsRecording(false);
+      setRecordingUri(uri ?? null);
 
       // Stop waveform animation
       cancelAnimation(waveScale);
@@ -137,28 +128,10 @@ export default function AudioRecorder({
     if (!recordingUri) return;
 
     try {
-      if (sound) {
-        if (isPlaying) {
-          await sound.pauseAsync();
-          setIsPlaying(false);
-        } else {
-          await sound.playAsync();
-          setIsPlaying(true);
-        }
+      if (player.playing) {
+        player.pause();
       } else {
-        const { sound: newSound } = await Audio.Sound.createAsync(
-          { uri: recordingUri },
-          { shouldPlay: true }
-        );
-
-        newSound.setOnPlaybackStatusUpdate((status) => {
-          if (status.isLoaded && status.didJustFinish) {
-            setIsPlaying(false);
-          }
-        });
-
-        setSound(newSound);
-        setIsPlaying(true);
+        player.play();
       }
     } catch (error) {
       console.error('Failed to play recording:', error);
@@ -167,13 +140,9 @@ export default function AudioRecorder({
   };
 
   const deleteRecording = () => {
-    if (sound) {
-      sound.unloadAsync();
-      setSound(null);
-    }
+    player.remove();
     setRecordingUri(null);
     setDuration(0);
-    setIsPlaying(false);
     onRecordingCancelled?.();
   };
 
@@ -184,7 +153,7 @@ export default function AudioRecorder({
   };
 
   // Show error state if audio is not available
-  if (!isAudioAvailable || audioError) {
+  if (audioError) {
     return (
       <View className="bg-gray-100 rounded-lg p-4">
         <View className="flex-row items-center justify-center py-3">
@@ -199,7 +168,7 @@ export default function AudioRecorder({
 
   return (
     <View className="bg-gray-100 rounded-lg p-4">
-      {!recording && !recordingUri ? (
+      {!isRecording && !recordingUri ? (
         // Initial state - ready to record
         <TouchableOpacity
           onPress={startRecording}
@@ -208,7 +177,7 @@ export default function AudioRecorder({
           <Mic size={24} color="#FFBF00" />
           <Text className="ml-3 text-gray-900 font-medium">Record Audio</Text>
         </TouchableOpacity>
-      ) : recording ? (
+      ) : isRecording ? (
         // Recording in progress
         <View>
           <View className="flex-row items-center justify-center mb-3">
@@ -245,7 +214,7 @@ export default function AudioRecorder({
             onPress={playRecording}
             className="bg-black rounded-lg py-3 flex-row items-center justify-center"
           >
-            {isPlaying ? (
+            {player.playing ? (
               <>
                 <Pause size={20} color="white" />
                 <Text className="ml-2 text-white font-semibold">Pause</Text>
@@ -261,4 +230,21 @@ export default function AudioRecorder({
       )}
     </View>
   );
+}
+
+export default function AudioRecorder(props: AudioRecorderProps) {
+  if (!audioSupported) {
+    return (
+      <View className="bg-gray-100 rounded-lg p-4">
+        <View className="flex-row items-center justify-center py-3">
+          <AlertCircle size={24} color="#9ca3af" />
+          <Text className="ml-3 text-gray-500 font-medium text-center">
+            Audio recording is not available
+          </Text>
+        </View>
+      </View>
+    );
+  }
+
+  return <AudioRecorderInner {...props} />;
 }
