@@ -46,6 +46,7 @@ export default function MessageThreadPage() {
       avatarUrl={otherUserProfile?.avatar_url}
       avatarFallback={otherUserProfile?.display_name?.[0]?.toUpperCase()}
       avatarColor="#d1d5db"
+      chatId={chatId || undefined}
       messages={messages}
       messagesLoading={isLoading}
       onSendMessage={async (content) => {

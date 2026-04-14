@@ -80,7 +80,7 @@ export const messagesService = {
     const { data, error } = await supabase
       .from('messages')
       .select(
-        '*, sender:profiles!messages_sender_id_fkey(*), response:responses(id, media_url, media_type, text_content, audio_url, prompt:prompts(text))'
+        '*, sender:profiles!messages_sender_id_fkey(*), response:responses!messages_response_id_fkey(id, media_url, media_type, text_content, audio_url, prompt:prompts!responses_prompt_id_fkey(text))'
       )
       .eq('chat_id', chatId)
       .gte('created_at', thirtyDaysAgo.toISOString())

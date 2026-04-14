@@ -80,7 +80,7 @@ export const responsesService = {
   ): Promise<any[]> {
     const { data, error } = await supabase
       .from('responses')
-      .select('*, prompt:prompts(*)')
+      .select('*, prompt:prompts!responses_prompt_id_fkey(*)')
       .eq('user_id', userId)
       .order('created_at', { ascending: false })
       .range(offset, offset + limit - 1);
@@ -96,7 +96,7 @@ export const responsesService = {
   async getPinnedResponses(userId: string): Promise<any[]> {
     const { data, error } = await supabase
       .from('responses')
-      .select('*, prompt:prompts(*)')
+      .select('*, prompt:prompts!responses_prompt_id_fkey(*)')
       .eq('user_id', userId)
       .eq('is_pinned', true)
       .order('created_at', { ascending: false })
@@ -132,7 +132,7 @@ export const responsesService = {
 
     const { data, error } = await supabase
       .from('responses')
-      .select('*, user:profiles(*), prompt:prompts(*)')
+      .select('*, user:profiles!responses_user_id_fkey(*), prompt:prompts!responses_prompt_id_fkey(*)')
       .eq('prompt_id', promptId)
       .eq('is_visible', true)
       .in('user_id', friendIds)
@@ -221,6 +221,43 @@ export const responsesService = {
     return (data || []).map((r) => r.prompt_id).filter(Boolean) as string[];
   },
 
+  async getRespondedPromptIds(userId: string, promptIds: string[]): Promise<string[]> {
+    if (!promptIds.length) return [];
+
+    const { data, error } = await supabase
+      .from('responses')
+      .select('prompt_id')
+      .eq('user_id', userId)
+      .in('prompt_id', promptIds);
+
+    if (error) {
+      console.error('Get responded prompt IDs error:', error);
+      throw error;
+    }
+
+    return (data || []).map((r) => r.prompt_id).filter(Boolean) as string[];
+  },
+
+  async getResponseCountsForPrompts(promptIds: string[]): Promise<Record<string, number>> {
+    if (!promptIds.length) return {};
+
+    const { data, error } = await supabase
+      .from('responses')
+      .select('prompt_id')
+      .in('prompt_id', promptIds);
+
+    if (error) {
+      console.error('Get response counts error:', error);
+      throw error;
+    }
+
+    const counts: Record<string, number> = {};
+    (data || []).forEach((r) => {
+      counts[r.prompt_id] = (counts[r.prompt_id] || 0) + 1;
+    });
+    return counts;
+  },
+
   // --- Circle/chat response methods (absorbed from circlesService) ---
 
   async submitChatResponse(
@@ -244,7 +281,7 @@ export const responsesService = {
         },
         { onConflict: 'prompt_id,user_id' }
       )
-      .select('*, user:profiles(*)')
+      .select('*, user:profiles!responses_user_id_fkey(*)')
       .single();
 
     if (error) throw error;
@@ -254,7 +291,7 @@ export const responsesService = {
   async getPromptResponses(promptId: string): Promise<any[]> {
     const { data, error } = await supabase
       .from('responses')
-      .select('*, user:profiles(*)')
+      .select('*, user:profiles!responses_user_id_fkey(*), prompt:prompts!responses_prompt_id_fkey(*)')
       .eq('prompt_id', promptId)
       .order('created_at', { ascending: true });
 

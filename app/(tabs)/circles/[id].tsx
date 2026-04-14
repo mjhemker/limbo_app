@@ -40,6 +40,7 @@ export default function CircleDetailPage() {
       avatarFallback={circle.name?.[0]?.toUpperCase()}
       avatarColor={circle.theme_color || '#4DB6AC'}
       onSettingsPress={() => router.push('/(tabs)/circles/' + id + '/settings')}
+      chatId={id}
       messages={messages}
       messagesLoading={messagesLoading}
       isGroup

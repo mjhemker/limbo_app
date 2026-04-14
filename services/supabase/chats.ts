@@ -156,7 +156,7 @@ export const chatsService = {
   async getChatPrompts(chatId: string): Promise<any[]> {
     const { data, error } = await supabase
       .from('prompts')
-      .select('*, creator:profiles(*)')
+      .select('*, creator:profiles!prompts_created_by_fkey(*)')
       .eq('chat_id', chatId)
       .order('created_at', { ascending: false });
 
@@ -167,12 +167,29 @@ export const chatsService = {
   async createChatPrompt(
     chatId: string,
     text: string,
-    createdBy: string
+    createdBy: string,
+    options?: {
+      type?: 'general' | 'debate' | 'draw';
+      debateSideA?: string;
+      debateSideB?: string;
+      debateOptions?: string[];
+    }
   ): Promise<any> {
+    const promptType = options?.type || 'general';
+    const isDebate = promptType === 'debate';
+
     const { data, error } = await supabase
       .from('prompts')
-      .insert({ chat_id: chatId, text, created_by: createdBy, type: 'general' })
-      .select('*, creator:profiles(*)')
+      .insert({
+        chat_id: chatId,
+        text,
+        created_by: createdBy,
+        type: promptType,
+        is_debate: isDebate,
+        debate_side_a: options?.debateSideA || null,
+        debate_side_b: options?.debateSideB || null,
+      })
+      .select('*, creator:profiles!prompts_created_by_fkey(*)')
       .single();
 
     if (error) throw error;

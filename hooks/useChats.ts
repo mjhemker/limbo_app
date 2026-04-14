@@ -54,6 +54,22 @@ export function useChatPromptResponses(promptId?: string) {
   });
 }
 
+export function useRespondedPromptIds(userId?: string, promptIds?: string[]) {
+  return useQuery({
+    queryKey: ['respondedPromptIds', userId, promptIds],
+    queryFn: () => responsesService.getRespondedPromptIds(userId!, promptIds!),
+    enabled: !!(userId && promptIds && promptIds.length > 0),
+  });
+}
+
+export function useResponseCountsForPrompts(promptIds?: string[]) {
+  return useQuery({
+    queryKey: ['responseCountsForPrompts', promptIds],
+    queryFn: () => responsesService.getResponseCountsForPrompts(promptIds!),
+    enabled: !!(promptIds && promptIds.length > 0),
+  });
+}
+
 export function useCreateGroupChat() {
   const queryClient = useQueryClient();
 
@@ -134,11 +150,18 @@ export function useCreateChatPrompt() {
       chatId,
       text,
       createdBy,
+      options,
     }: {
       chatId: string;
       text: string;
       createdBy: string;
-    }) => chatsService.createChatPrompt(chatId, text, createdBy),
+      options?: {
+        type?: 'general' | 'debate' | 'draw';
+        debateSideA?: string;
+        debateSideB?: string;
+        debateOptions?: string[];
+      };
+    }) => chatsService.createChatPrompt(chatId, text, createdBy, options),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['chatPrompts'] });
     },
@@ -155,22 +178,27 @@ export function useSubmitChatResponse() {
       textContent,
       mediaUrl,
       mediaType,
+      debateSide,
     }: {
       promptId: string;
       userId: string;
       textContent: string;
       mediaUrl?: string | null;
       mediaType?: 'image' | 'video' | null;
+      debateSide?: 'side_a' | 'side_b' | null;
     }) =>
       responsesService.submitChatResponse(
         promptId,
         userId,
         textContent,
         mediaUrl || null,
-        mediaType || null
+        mediaType || null,
+        debateSide || null
       ),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['chatPromptResponses'] });
+      queryClient.invalidateQueries({ queryKey: ['respondedPromptIds'] });
+      queryClient.invalidateQueries({ queryKey: ['responseCountsForPrompts'] });
     },
   });
 }
