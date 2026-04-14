@@ -39,6 +39,7 @@ export default function CircleDetailPage() {
       avatarUrl={circle.avatar_url}
       avatarFallback={circle.name?.[0]?.toUpperCase()}
       avatarColor={circle.theme_color || '#4DB6AC'}
+      onBack={() => router.replace('/(tabs)/circles')}
       onSettingsPress={() => router.push('/(tabs)/circles/' + id + '/settings')}
       chatId={id}
       messages={messages}

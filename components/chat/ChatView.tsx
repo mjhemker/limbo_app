@@ -68,6 +68,7 @@ export interface ChatViewProps {
   avatarFallback?: string;
   avatarColor?: string;
   onSettingsPress?: () => void;
+  onBack?: () => void;
 
   chatId?: string;
   messages: ChatMessage[] | undefined;
@@ -171,6 +172,7 @@ export function ChatView({
   avatarFallback,
   avatarColor = '#d1d5db',
   onSettingsPress,
+  onBack,
   chatId,
   messages,
   messagesLoading,
@@ -312,7 +314,7 @@ export function ChatView({
         <View className="flex-1">
           {/* Header */}
           <View className="flex-row items-center px-4 py-3 border-b border-gray-200">
-            <TouchableOpacity onPress={() => router.back()}><ArrowLeft size={24} color="#111827" /></TouchableOpacity>
+            <TouchableOpacity onPress={onBack || (() => router.back())}><ArrowLeft size={24} color="#111827" /></TouchableOpacity>
             <View className="flex-1 items-center">
               {avatarUrl ? (
                 <Image source={{ uri: avatarUrl }} className="w-8 h-8 rounded-full bg-gray-200 mb-0.5" />
