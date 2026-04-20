@@ -78,7 +78,7 @@ export default function SignupScreen() {
           <View className="flex-1 justify-center px-8">
           {/* Logo and Title */}
           <View className="items-center mb-10">
-            <Text className="text-5xl font-black text-black mb-3">
+            <Text className="text-5xl font-black text-black mb-3 font-heading">
               Limbo
             </Text>
             <Text className="text-gray-600 text-base">

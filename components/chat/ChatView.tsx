@@ -15,7 +15,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { ArrowLeft, Settings, Plus, ArrowUp, HelpCircle, Image as LucideImage, Swords, Pencil, X } from 'lucide-react-native';
+import { ArrowLeft, Gear, Plus, ArrowUp, Question, Image as ImageIcon, Swords, Pencil, X } from 'phosphor-react-native';
 import * as ImagePicker from 'expo-image-picker';
 import BottomSheet, { BottomSheetBackdrop, BottomSheetView } from '@gorhom/bottom-sheet';
 import { useAuth } from '../../contexts/AuthContext';
@@ -98,13 +98,13 @@ function PlusMenu({ visible, onClose, onPrompt, onImage }: {
       >
         <TouchableOpacity className="flex-row items-center px-4 py-3" onPress={() => { onClose(); onPrompt(); }} activeOpacity={0.6}>
           <View className="w-10 h-10 bg-black rounded-xl items-center justify-center">
-            <HelpCircle size={20} color="white" />
+            <Question weight="bold" size={20} color="white" />
           </View>
           <Text className="text-base font-semibold text-gray-900 ml-3">Prompt</Text>
         </TouchableOpacity>
         <TouchableOpacity className="flex-row items-center px-4 py-3" onPress={() => { onClose(); onImage(); }} activeOpacity={0.6}>
           <View className="w-10 h-10 bg-black rounded-xl items-center justify-center">
-            <LucideImage size={20} color="white" />
+            <ImageIcon weight="bold" size={20} color="white" />
           </View>
           <Text className="text-base font-semibold text-gray-900 ml-3">Image</Text>
         </TouchableOpacity>
@@ -122,7 +122,7 @@ function PromptCard({ promptData, hasResponded, responseCount, onRespond, onView
   onViewResponses: () => void;
 }) {
   const typeConfig = {
-    general: { label: 'BASIC', Icon: HelpCircle, color: '#000' },
+    general: { label: 'BASIC', Icon: Question, color: '#000' },
     debate: { label: 'DEBATE', Icon: Swords, color: '#7c3aed' },
     draw: { label: 'DRAW', Icon: Pencil, color: '#f59e0b' },
   };
@@ -133,7 +133,7 @@ function PromptCard({ promptData, hasResponded, responseCount, onRespond, onView
   return (
     <View className="bg-gray-50 border border-gray-200 rounded-2xl overflow-hidden" style={{ width: 260 }}>
       <View className="flex-row items-center px-4 pt-3.5 pb-2">
-        <Icon size={14} color={color} strokeWidth={2.5} />
+        <Icon weight="bold" size={14} color={color} />
         <Text className="text-xs font-bold uppercase tracking-wider ml-1.5" style={{ color }}>{label}</Text>
       </View>
       <View className="px-4 pb-3">
@@ -314,7 +314,7 @@ export function ChatView({
         <View className="flex-1">
           {/* Header */}
           <View className="flex-row items-center px-4 py-3 border-b border-gray-200">
-            <TouchableOpacity onPress={onBack || (() => router.back())}><ArrowLeft size={24} color="#111827" /></TouchableOpacity>
+            <TouchableOpacity onPress={onBack || (() => router.back())}><ArrowLeft weight="bold" size={24} color="#111827" /></TouchableOpacity>
             <View className="flex-1 items-center">
               {avatarUrl ? (
                 <Image source={{ uri: avatarUrl }} className="w-8 h-8 rounded-full bg-gray-200 mb-0.5" />
@@ -327,7 +327,7 @@ export function ChatView({
               {subtitle && <Text className="text-xs text-gray-500">{subtitle}</Text>}
             </View>
             {onSettingsPress ? (
-              <TouchableOpacity onPress={onSettingsPress}><Settings size={22} color="#111827" /></TouchableOpacity>
+              <TouchableOpacity onPress={onSettingsPress}><Gear weight="bold" size={22} color="#111827" /></TouchableOpacity>
             ) : <View style={{ width: 24 }} />}
           </View>
 
@@ -420,7 +420,7 @@ export function ChatView({
           {/* Input Bar */}
           <View className="flex-row items-end px-3 py-2 bg-white border-t border-gray-200 gap-2">
             <TouchableOpacity onPress={() => setShowPlusMenu(!showPlusMenu)} activeOpacity={0.6} style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: '#f3f4f6', alignItems: 'center', justifyContent: 'center', marginBottom: 1 }}>
-              <Plus size={22} color="#9ca3af" strokeWidth={2} />
+              <Plus weight="bold" size={22} color="#9ca3af" />
             </TouchableOpacity>
             <TextInput
               style={{ flex: 1, borderRadius: 18, backgroundColor: '#f3f4f6', paddingHorizontal: 16, paddingTop: 8, paddingBottom: 8, minHeight: 36, maxHeight: 100, fontSize: 16 }}
@@ -428,7 +428,7 @@ export function ChatView({
               onFocus={() => setShowPlusMenu(false)}
             />
             <TouchableOpacity onPress={handleSend} disabled={!messageText.trim()} activeOpacity={0.6} style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: messageText.trim() ? '#000' : '#f3f4f6', alignItems: 'center', justifyContent: 'center', marginBottom: 1 }}>
-              <ArrowUp size={20} color={messageText.trim() ? '#fff' : '#9ca3af'} strokeWidth={2.5} />
+              <ArrowUp weight="bold" size={20} color={messageText.trim() ? '#fff' : '#9ca3af'} />
             </TouchableOpacity>
           </View>
         </View>
@@ -441,7 +441,7 @@ export function ChatView({
         <BottomSheetView className="flex-1 px-5">
           <View className="flex-row items-center justify-between py-2 mb-2">
             <TouchableOpacity onPress={closePromptSheet}><Text className="text-base text-gray-600">Cancel</Text></TouchableOpacity>
-            <Text className="text-lg font-bold text-black">New Prompt</Text>
+            <Text className="text-lg font-bold text-black font-heading">New Prompt</Text>
             <TouchableOpacity onPress={handlePost} disabled={creating || !canPost()}>
               <Text className={`text-base font-semibold ${canPost() && !creating ? 'text-blue-500' : 'text-gray-300'}`}>{creating ? 'Posting...' : 'Post'}</Text>
             </TouchableOpacity>
@@ -466,7 +466,7 @@ export function ChatView({
                 <View key={index} className="flex-row items-center mb-3">
                   <Text className="text-sm font-bold text-gray-400 w-6">{String.fromCharCode(65 + index)}</Text>
                   <TextInput className="flex-1 bg-gray-100 rounded-xl px-4 py-3 text-base" placeholder={`Option ${String.fromCharCode(65 + index)}`} value={option} onChangeText={(t) => { const u = [...debateOptions]; u[index] = t; setDebateOptions(u); }} maxLength={80} />
-                  {debateOptions.length > 2 && <TouchableOpacity onPress={() => setDebateOptions(debateOptions.filter((_, i) => i !== index))} className="ml-2"><X size={18} color="#9ca3af" /></TouchableOpacity>}
+                  {debateOptions.length > 2 && <TouchableOpacity onPress={() => setDebateOptions(debateOptions.filter((_, i) => i !== index))} className="ml-2"><X weight="bold" size={18} color="#9ca3af" /></TouchableOpacity>}
                 </View>
               ))}
               {debateOptions.length < 6 && <TouchableOpacity onPress={() => setDebateOptions([...debateOptions, ''])} className="mb-12"><Text className="text-sm font-semibold text-gray-500">+ Add option</Text></TouchableOpacity>}
@@ -483,7 +483,7 @@ export function ChatView({
                   activeOpacity={0.7}
                 >
                   <View className="w-10 h-10 rounded-xl border-2 border-dashed border-gray-300 items-center justify-center mb-2">
-                    <Pencil size={18} color="#9ca3af" />
+                    <Pencil weight="bold" size={18} color="#9ca3af" />
                   </View>
                   <Text className={`text-sm font-semibold ${drawCanvas === 'blank' ? 'text-black' : 'text-gray-500'}`}>Blank Canvas</Text>
                 </TouchableOpacity>
@@ -502,7 +502,7 @@ export function ChatView({
                   ) : (
                     <>
                       <View className="w-10 h-10 rounded-xl bg-gray-200 items-center justify-center mb-2">
-                        <LucideImage size={18} color="#9ca3af" />
+                        <ImageIcon weight="bold" size={18} color="#9ca3af" />
                       </View>
                       <Text className={`text-sm font-semibold ${drawCanvas === 'image' ? 'text-black' : 'text-gray-500'}`}>Upload Image</Text>
                     </>

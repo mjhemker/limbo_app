@@ -10,7 +10,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { ArrowLeft, Check } from 'lucide-react-native';
+import { ArrowLeft, Check } from 'phosphor-react-native';
 import { useAuth } from '../../../../../contexts/AuthContext';
 import { useSubmitChatResponse } from '../../../../../hooks/useChats';
 import { toast } from '../../../../../utils/toast';
@@ -72,15 +72,15 @@ export default function DebateRespondPage() {
         {/* Header */}
         <View className="flex-row items-center justify-between px-4 py-3 border-b border-gray-200">
           <TouchableOpacity onPress={() => router.back()}>
-            <ArrowLeft size={24} color="#111827" />
+            <ArrowLeft weight="bold" size={24} color="#111827" />
           </TouchableOpacity>
-          <Text className="text-lg font-semibold text-gray-900">{headerTitle}</Text>
+          <Text className="text-lg font-semibold text-gray-900 font-heading">{headerTitle}</Text>
           <View style={{ width: 24 }} />
         </View>
 
         <ScrollView className="flex-1 p-4" keyboardShouldPersistTaps="handled">
           {/* Prompt text */}
-          <Text className="text-xl font-bold text-gray-900 text-center mb-8 px-4">
+          <Text className="text-xl font-bold text-gray-900 text-center mb-8 px-4 font-heading">
             {promptText || ''}
           </Text>
 
@@ -98,7 +98,7 @@ export default function DebateRespondPage() {
               selectedSide === 'side_a' ? 'bg-blue-500' : 'bg-gray-200'
             }`}>
               {selectedSide === 'side_a' ? (
-                <Check size={16} color="white" strokeWidth={3} />
+                <Check weight="bold" size={16} color="white" />
               ) : (
                 <Text className="text-sm font-bold text-gray-500">A</Text>
               )}
@@ -119,7 +119,7 @@ export default function DebateRespondPage() {
               selectedSide === 'side_b' ? 'bg-red-500' : 'bg-gray-200'
             }`}>
               {selectedSide === 'side_b' ? (
-                <Check size={16} color="white" strokeWidth={3} />
+                <Check weight="bold" size={16} color="white" />
               ) : (
                 <Text className="text-sm font-bold text-gray-500">B</Text>
               )}

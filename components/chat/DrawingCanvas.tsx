@@ -1,7 +1,7 @@
 import { useState, useCallback } from 'react';
 import { View, TouchableOpacity, Image, Dimensions } from 'react-native';
 import { Canvas, Path, Skia, useCanvasRef } from '@shopify/react-native-skia';
-import { Undo2, Trash2 } from 'lucide-react-native';
+import { ArrowUUpLeft, Trash } from 'phosphor-react-native';
 
 const COLORS = ['#000000', '#ef4444', '#f97316', '#eab308', '#22c55e', '#3b82f6', '#8b5cf6', '#ec4899', '#ffffff'];
 
@@ -130,7 +130,7 @@ export function DrawingCanvas({ backgroundImageUri, onDrawingChange, canvasRef: 
             className={paths.length === 0 ? 'opacity-30' : ''}
             activeOpacity={0.6}
           >
-            <Undo2 size={22} color="#374151" />
+            <ArrowUUpLeft weight="bold" size={22} color="#374151" />
           </TouchableOpacity>
           <TouchableOpacity
             onPress={clear}
@@ -138,7 +138,7 @@ export function DrawingCanvas({ backgroundImageUri, onDrawingChange, canvasRef: 
             className={paths.length === 0 ? 'opacity-30' : ''}
             activeOpacity={0.6}
           >
-            <Trash2 size={22} color="#374151" />
+            <Trash weight="bold" size={22} color="#374151" />
           </TouchableOpacity>
         </View>
       </View>

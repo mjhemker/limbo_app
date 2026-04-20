@@ -10,7 +10,7 @@ import {
   StatusBar,
   StyleSheet,
 } from 'react-native';
-import { X, Share2 } from 'lucide-react-native';
+import { X, ShareNetwork } from 'phosphor-react-native';
 import * as FileSystem from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
 import * as haptics from '../../utils/haptics';
@@ -177,14 +177,14 @@ export function ImageLightbox({ visible, imageUrl, onClose }: ImageLightboxProps
             onPress={handleClose}
             style={styles.headerButton}
           >
-            <X size={28} color="white" />
+            <X weight="bold" size={28} color="white" />
           </TouchableOpacity>
           <View style={styles.headerActions}>
             <TouchableOpacity
               onPress={handleShare}
               style={styles.headerButton}
             >
-              <Share2 size={24} color="white" />
+              <ShareNetwork weight="bold" size={24} color="white" />
             </TouchableOpacity>
           </View>
         </View>

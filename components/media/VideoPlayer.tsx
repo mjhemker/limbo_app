@@ -1,5 +1,5 @@
 import { View, Text, Dimensions } from 'react-native';
-import { AlertCircle } from 'lucide-react-native';
+import { WarningCircle } from 'phosphor-react-native';
 
 interface VideoPlayerProps {
   uri: string;
@@ -25,7 +25,7 @@ export default function VideoPlayer({
       className={`relative ${className} bg-gray-100 items-center justify-center`}
       style={{ width, height }}
     >
-      <AlertCircle size={32} color="#9ca3af" />
+      <WarningCircle weight="bold" size={32} color="#9ca3af" />
       <Text className="text-gray-500 mt-2">Video playback unavailable</Text>
     </View>
   );

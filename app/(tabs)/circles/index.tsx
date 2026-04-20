@@ -1,7 +1,7 @@
 import { View, Text, ScrollView, TouchableOpacity, RefreshControl, ActivityIndicator, Image } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { Plus, Users } from 'lucide-react-native';
+import { Plus, Users } from 'phosphor-react-native';
 import { useState } from 'react';
 import { useAuth } from '../../../contexts/AuthContext';
 import { useMyGroupChats as useMyCircles } from '../../../hooks/useChats';
@@ -46,13 +46,13 @@ export default function CirclesPage() {
       <View className="px-5 pt-4">
         {/* Header */}
         <View className="flex-row items-center justify-between mb-6">
-          <Text className="text-3xl font-black text-black">Circles</Text>
+          <Text className="text-3xl font-black text-black font-heading">Circles</Text>
           <TouchableOpacity
             onPress={handleCreateCircle}
             className="bg-black rounded-full px-4 py-2.5 flex-row items-center"
             activeOpacity={0.7}
           >
-            <Plus size={18} color="white" strokeWidth={2.5} />
+            <Plus weight="bold" size={18} color="white" />
             <Text className="text-white font-semibold ml-1.5">New Circle</Text>
           </TouchableOpacity>
         </View>
@@ -87,7 +87,7 @@ export default function CirclesPage() {
 
                   {/* Circle Info */}
                   <View className="flex-1 ml-4">
-                    <Text className="text-lg font-bold text-black">
+                    <Text className="text-lg font-bold text-black font-heading">
                       {circle.name}
                     </Text>
                     {circle.description && (
@@ -151,9 +151,9 @@ export default function CirclesPage() {
         ) : (
           <View className="bg-gray-50 rounded-3xl p-12 items-center border border-gray-200">
             <View className="w-16 h-16 bg-gray-200 rounded-full items-center justify-center mb-4">
-              <Users size={28} color="#9ca3af" />
+              <Users weight="bold" size={28} color="#9ca3af" />
             </View>
-            <Text className="text-lg font-bold text-black text-center mb-2">
+            <Text className="text-lg font-bold text-black text-center mb-2 font-heading">
               No circles yet
             </Text>
             <Text className="text-gray-600 text-center mb-6">

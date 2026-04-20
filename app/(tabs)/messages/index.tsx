@@ -2,7 +2,7 @@ import { View, Text, ScrollView, TouchableOpacity, RefreshControl, ActivityIndic
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
-import { MessageCircle, UserPlus, Plus, Users, ChevronDown, Check } from 'lucide-react-native';
+import { ChatCircle, UserPlus, Plus, Users, CaretDown, Check } from 'phosphor-react-native';
 import { useAuth } from '../../../contexts/AuthContext';
 import { useChats, useSuggestedConversations } from '../../../hooks/useMessages';
 import { useFriends } from '../../../hooks/useFriends';
@@ -38,7 +38,7 @@ function FilterDropdown({ activeFilter, onFilterChange, visible, onClose }: {
                 {option.label}
               </Text>
               {activeFilter === option.key && (
-                <Check size={18} color="#000" strokeWidth={2.5} />
+                <Check weight="bold" size={18} color="#000" />
               )}
             </TouchableOpacity>
           ))}
@@ -52,7 +52,7 @@ function SuggestedRow({ suggestedFriends, router }: { suggestedFriends: any[]; r
   if (suggestedFriends.length === 0) return null;
   return (
     <View className="mb-2">
-      <Text className="text-xs font-semibold text-gray-400 uppercase tracking-wide px-5 mb-2">
+      <Text className="text-sm font-semibold text-gray-400 uppercase tracking-wide px-5 mb-2">
         Suggested
       </Text>
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 20 }}>
@@ -248,8 +248,8 @@ export default function MessagesPage() {
           onPress={() => setShowDropdown(true)}
           activeOpacity={0.6}
         >
-          <Text className="text-2xl font-black text-black">{activeLabel}</Text>
-          <ChevronDown size={22} color="#000" strokeWidth={2.5} style={{ marginLeft: 4, marginTop: 2 }} />
+          <Text className="text-2xl font-black text-black font-heading">{activeLabel}</Text>
+          <CaretDown weight="bold" size={22} color="#000" style={{ marginLeft: 4, marginTop: 2 }} />
         </TouchableOpacity>
 
         <TouchableOpacity
@@ -263,7 +263,7 @@ export default function MessagesPage() {
           className="bg-black rounded-full px-4 py-2 flex-row items-center"
           activeOpacity={0.7}
         >
-          <Plus size={16} color="white" strokeWidth={2.5} />
+          <Plus weight="bold" size={16} color="white" />
           <Text className="text-white font-semibold text-sm ml-1">New</Text>
         </TouchableOpacity>
       </View>
@@ -295,7 +295,7 @@ export default function MessagesPage() {
           {showDMs && conversations && conversations.length > 0 && (
             <View>
               {activeFilter === 'all' && (circles?.length ?? 0) > 0 && (
-                <Text className="text-xs font-semibold text-gray-400 uppercase tracking-wide px-5 mt-2 mb-1">
+                <Text className="text-sm font-semibold text-gray-400 uppercase tracking-wide px-5 mt-2 mb-1">
                   Messages
                 </Text>
               )}
@@ -315,7 +315,7 @@ export default function MessagesPage() {
           {showCirclesList && circles && circles.length > 0 && (
             <View>
               {activeFilter === 'all' && (conversations?.length ?? 0) > 0 && (
-                <Text className="text-xs font-semibold text-gray-400 uppercase tracking-wide px-5 mt-2 mb-1">
+                <Text className="text-sm font-semibold text-gray-400 uppercase tracking-wide px-5 mt-2 mb-1">
                   Circles
                 </Text>
               )}
@@ -334,9 +334,9 @@ export default function MessagesPage() {
           {showDMs && (!conversations || conversations.length === 0) && suggestedFriends.length === 0 && activeFilter !== 'all' && (
             <View className="px-5 mt-8 items-center">
               <View className="w-16 h-16 bg-gray-100 rounded-full items-center justify-center mb-4">
-                <MessageCircle size={28} color="#9ca3af" />
+                <ChatCircle weight="bold" size={28} color="#9ca3af" />
               </View>
-              <Text className="text-lg font-bold text-black text-center mb-1">
+              <Text className="text-lg font-bold text-black text-center mb-1 font-heading">
                 No conversations yet
               </Text>
               <Text className="text-gray-500 text-center mb-5">
@@ -354,9 +354,9 @@ export default function MessagesPage() {
           {showCirclesList && (!circles || circles.length === 0) && activeFilter !== 'all' && (
             <View className="px-5 mt-8 items-center">
               <View className="w-16 h-16 bg-gray-100 rounded-full items-center justify-center mb-4">
-                <Users size={28} color="#9ca3af" />
+                <Users weight="bold" size={28} color="#9ca3af" />
               </View>
-              <Text className="text-lg font-bold text-black text-center mb-1">
+              <Text className="text-lg font-bold text-black text-center mb-1 font-heading">
                 No circles yet
               </Text>
               <Text className="text-gray-500 text-center mb-5">

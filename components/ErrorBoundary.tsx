@@ -1,7 +1,7 @@
 import React, { Component, ReactNode } from 'react';
 import { View, Text, TouchableOpacity, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { AlertTriangle, RefreshCw } from 'lucide-react-native';
+import { Warning, ArrowsClockwise } from 'phosphor-react-native';
 
 interface Props {
   children: ReactNode;
@@ -71,11 +71,11 @@ export class ErrorBoundary extends Component<Props, State> {
             <View className="items-center justify-center py-12">
               {/* Error Icon */}
               <View className="w-20 h-20 rounded-full bg-red-100 items-center justify-center mb-6">
-                <AlertTriangle size={40} color="#ef4444" />
+                <Warning weight="bold" size={40} color="#ef4444" />
               </View>
 
               {/* Error Title */}
-              <Text className="text-2xl font-black text-gray-900 mb-2 text-center">
+              <Text className="text-2xl font-black text-gray-900 mb-2 text-center font-heading">
                 Oops! Something went wrong
               </Text>
 
@@ -91,7 +91,7 @@ export class ErrorBoundary extends Component<Props, State> {
                 className="bg-blue-600 rounded-full px-8 py-4 flex-row items-center"
                 activeOpacity={0.7}
               >
-                <RefreshCw size={20} color="white" />
+                <ArrowsClockwise weight="bold" size={20} color="white" />
                 <Text className="text-white font-semibold ml-2">Try Again</Text>
               </TouchableOpacity>
 

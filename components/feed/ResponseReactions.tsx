@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { View, Text, TouchableOpacity, Modal } from 'react-native';
-import { Heart, ThumbsUp, Laugh, Frown, PartyPopper } from 'lucide-react-native';
+import { Heart, ThumbsUp, SmileyWink, SmileySad, Confetti } from 'phosphor-react-native';
 import { useReactions, useAddReaction, useRemoveReaction } from '../../hooks/useReactions';
 import * as haptics from '../../utils/haptics';
 
@@ -72,7 +72,7 @@ export function ResponseReactions({ responseId, userId, postOwnerId }: ResponseR
         }}
         className="flex-row items-center bg-gray-100 rounded-full px-3 py-1.5"
       >
-        <Heart size={14} color="#6b7280" />
+        <Heart weight="bold" size={14} color="#6b7280" />
         {totalReactions === 0 && (
           <Text className="text-xs text-gray-500 ml-1">React</Text>
         )}

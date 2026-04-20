@@ -13,7 +13,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
-import { ArrowLeft, Camera, QrCode, LogOut, FileText, Shield, Moon, Code } from 'lucide-react-native';
+import { ArrowLeft, Camera, QrCode, SignOut, FileText, Shield, Moon, Code } from 'phosphor-react-native';
 import { useAuth } from '../../../contexts/AuthContext';
 import { useProfile, useUpdateProfile } from '../../../hooks/useProfile';
 import { useTheme } from '../../../contexts/ThemeContext';
@@ -132,9 +132,9 @@ export default function EditProfilePage() {
       {/* Header */}
       <View className="flex-row items-center justify-between px-4 py-3 border-b border-gray-200">
         <TouchableOpacity onPress={() => router.back()}>
-          <ArrowLeft size={24} color="#111827" />
+          <ArrowLeft weight="bold" size={24} color="#111827" />
         </TouchableOpacity>
-        <Text className="text-lg font-semibold text-gray-900">Edit Profile</Text>
+        <Text className="text-lg font-semibold text-gray-900 font-heading">Edit Profile</Text>
         <TouchableOpacity onPress={handleSave} disabled={saving}>
           <Text className="text-primary-600 font-semibold">
             {saving ? 'Saving...' : 'Save'}
@@ -160,7 +160,7 @@ export default function EditProfilePage() {
                 </View>
               )}
               <View className="absolute bottom-0 right-0 bg-primary-500 rounded-full p-2">
-                <Camera size={16} color="white" />
+                <Camera weight="bold" size={16} color="white" />
               </View>
             </TouchableOpacity>
             <Text className="text-sm text-gray-600 mt-2">Tap to change photo</Text>
@@ -215,7 +215,7 @@ export default function EditProfilePage() {
 
           {/* Theme Settings */}
           <View className="mb-6">
-            <Text className="text-lg font-semibold text-gray-900 mb-3">
+            <Text className="text-lg font-semibold text-gray-900 mb-3 font-heading">
               Appearance
             </Text>
 
@@ -271,7 +271,7 @@ export default function EditProfilePage() {
 
           {/* Notification Settings */}
           <View className="mb-6">
-            <Text className="text-lg font-semibold text-gray-900 mb-3">
+            <Text className="text-lg font-semibold text-gray-900 mb-3 font-heading">
               Notifications
             </Text>
 
@@ -317,12 +317,12 @@ export default function EditProfilePage() {
                 Share your profile with friends
               </Text>
             </View>
-            <QrCode size={24} color="#FFBF00" />
+            <QrCode weight="bold" size={24} color="#FFBF00" />
           </TouchableOpacity>
 
           {/* Legal Section */}
           <View className="mb-6">
-            <Text className="text-lg font-semibold text-gray-900 mb-3">
+            <Text className="text-lg font-semibold text-gray-900 mb-3 font-heading">
               Legal
             </Text>
 
@@ -331,7 +331,7 @@ export default function EditProfilePage() {
               className="bg-gray-50 border border-gray-200 rounded-lg p-4 flex-row items-center justify-between mb-3"
             >
               <View className="flex-1 flex-row items-center">
-                <Shield size={20} color="#6b7280" />
+                <Shield weight="bold" size={20} color="#6b7280" />
                 <Text className="font-medium text-gray-900 ml-3">Privacy Policy</Text>
               </View>
               <Text className="text-gray-400">›</Text>
@@ -342,7 +342,7 @@ export default function EditProfilePage() {
               className="bg-gray-50 border border-gray-200 rounded-lg p-4 flex-row items-center justify-between"
             >
               <View className="flex-1 flex-row items-center">
-                <FileText size={20} color="#6b7280" />
+                <FileText weight="bold" size={20} color="#6b7280" />
                 <Text className="font-medium text-gray-900 ml-3">Terms of Service</Text>
               </View>
               <Text className="text-gray-400">›</Text>
@@ -352,13 +352,13 @@ export default function EditProfilePage() {
           {/* Developer Section (Dev Mode Only) */}
           {__DEV__ && (
             <View className="mb-6">
-              <Text className="text-lg font-semibold text-gray-900 mb-3">
+              <Text className="text-lg font-semibold text-gray-900 mb-3 font-heading">
                 Developer
               </Text>
 
               <View className="bg-gray-50 border border-gray-200 rounded-lg p-4">
                 <View className="flex-row items-center mb-2">
-                  <Code size={20} color="#6b7280" />
+                  <Code weight="bold" size={20} color="#6b7280" />
                   <Text className="font-medium text-gray-900 ml-3">Environment</Text>
                 </View>
                 <Text className="text-sm text-gray-600 mb-2">
@@ -387,7 +387,7 @@ export default function EditProfilePage() {
             onPress={handleSignOut}
             className="bg-red-50 border border-red-200 rounded-lg p-4 flex-row items-center justify-center"
           >
-            <LogOut size={20} color="#ef4444" />
+            <SignOut weight="bold" size={20} color="#ef4444" />
             <Text className="text-red-600 font-semibold ml-2">Sign Out</Text>
           </TouchableOpacity>
         </View>

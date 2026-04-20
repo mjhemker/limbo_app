@@ -10,7 +10,7 @@ import {
   Platform,
   Share as RNShareAPI,
 } from 'react-native';
-import { X, MessageSquare, Send, Copy, Share2 } from 'lucide-react-native';
+import { X, ChatText, PaperPlaneRight, Copy, ShareNetwork } from 'phosphor-react-native';
 import * as haptics from '../../utils/haptics';
 import { toast } from '../../utils/toast';
 import { DEEP_LINKING, APP_NAME } from '../../lib/constants';
@@ -99,12 +99,12 @@ export function SMSInviteModal({
         <View className="bg-white rounded-t-3xl p-6">
           {/* Header */}
           <View className="flex-row items-center justify-between mb-6">
-            <Text className="text-xl font-bold text-black">Invite Friends</Text>
+            <Text className="text-xl font-bold text-black font-heading">Invite Friends</Text>
             <TouchableOpacity
               onPress={onClose}
               className="w-8 h-8 items-center justify-center"
             >
-              <X size={24} color="#111827" />
+              <X weight="bold" size={24} color="#111827" />
             </TouchableOpacity>
           </View>
 
@@ -115,7 +115,7 @@ export function SMSInviteModal({
             </Text>
             <View className="flex-row items-center gap-2">
               <View className="flex-1 flex-row items-center bg-gray-50 border border-gray-300 rounded-xl px-4 py-3">
-                <MessageSquare size={20} color="#6b7280" />
+                <ChatText weight="bold" size={20} color="#6b7280" />
                 <TextInput
                   className="flex-1 ml-2 text-base"
                   placeholder="Enter phone number"
@@ -130,7 +130,7 @@ export function SMSInviteModal({
                 className="bg-black rounded-xl p-3.5"
                 disabled={!phoneNumber.trim()}
               >
-                <Send size={20} color="white" />
+                <PaperPlaneRight weight="bold" size={20} color="white" />
               </TouchableOpacity>
             </View>
           </View>
@@ -149,14 +149,14 @@ export function SMSInviteModal({
                   onPress={handleCopyLink}
                   className="flex-1 flex-row items-center justify-center bg-gray-100 rounded-xl py-3"
                 >
-                  <Copy size={18} color="#374151" />
+                  <Copy weight="bold" size={18} color="#374151" />
                   <Text className="text-gray-700 font-semibold ml-2">Copy Link</Text>
                 </TouchableOpacity>
                 <TouchableOpacity
                   onPress={handleShare}
                   className="flex-1 flex-row items-center justify-center bg-primary-500 rounded-xl py-3"
                 >
-                  <Share2 size={18} color="#000" />
+                  <ShareNetwork weight="bold" size={18} color="#000" />
                   <Text className="text-black font-semibold ml-2">Share</Text>
                 </TouchableOpacity>
               </View>

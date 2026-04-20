@@ -1,5 +1,5 @@
 import { View, Text } from 'react-native';
-import { AlertCircle } from 'lucide-react-native';
+import { WarningCircle } from 'phosphor-react-native';
 
 interface AudioRecorderProps {
   onRecordingComplete: (uri: string) => void;
@@ -12,7 +12,7 @@ export default function AudioRecorder(_props: AudioRecorderProps) {
   return (
     <View className="bg-gray-100 rounded-lg p-4">
       <View className="flex-row items-center justify-center py-3">
-        <AlertCircle size={24} color="#9ca3af" />
+        <WarningCircle weight="bold" size={24} color="#9ca3af" />
         <Text className="ml-3 text-gray-500 font-medium text-center">
           Audio recording is not available
         </Text>

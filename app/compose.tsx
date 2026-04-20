@@ -15,7 +15,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
-import { X, Image as ImageIcon, Mic, ArrowLeft, Type, Camera } from 'lucide-react-native';
+import { X, Image as ImageIcon, Microphone, ArrowLeft, TextT, Camera } from 'phosphor-react-native';
 import { DrawingCanvas } from '../components/chat/DrawingCanvas';
 import { captureRef } from 'react-native-view-shot';
 import { useAuth } from '../contexts/AuthContext';
@@ -275,7 +275,7 @@ export default function ComposePage() {
       <SafeAreaView edges={['top']} className="flex-1 bg-white">
         <View className="flex-row items-center px-5 py-4 border-b border-gray-100">
           <TouchableOpacity onPress={() => router.back()}>
-            <ArrowLeft size={24} color="#000" />
+            <ArrowLeft weight="bold" size={24} color="#000" />
           </TouchableOpacity>
         </View>
         <View className="flex-1 items-center justify-center">
@@ -290,11 +290,11 @@ export default function ComposePage() {
       <SafeAreaView edges={['top']} className="flex-1 bg-white">
         <View className="flex-row items-center px-5 py-4 border-b border-gray-100">
           <TouchableOpacity onPress={() => router.back()}>
-            <ArrowLeft size={24} color="#000" />
+            <ArrowLeft weight="bold" size={24} color="#000" />
           </TouchableOpacity>
         </View>
         <View className="flex-1 items-center justify-center px-6">
-          <Text className="text-xl font-bold text-gray-900 text-center mb-2">
+          <Text className="text-xl font-bold text-gray-900 text-center mb-2 font-heading">
             No prompt available
           </Text>
           <Text className="text-gray-600 text-center">
@@ -313,7 +313,7 @@ export default function ComposePage() {
   const tabs: { key: ResponseMode; label: string; icon: any }[] = isDraw
     ? [{ key: 'draw', label: 'Draw', icon: null }]
     : [
-        { key: 'text', label: 'Text', icon: Type },
+        { key: 'text', label: 'Text', icon: TextT },
         { key: 'image', label: 'Photo', icon: ImageIcon },
       ];
 
@@ -328,7 +328,7 @@ export default function ComposePage() {
           <View className="px-5 pt-4 pb-3 border-b border-gray-100">
             <View className="flex-row items-center justify-between">
               <TouchableOpacity onPress={() => router.back()}>
-                <ArrowLeft size={24} color="#000" />
+                <ArrowLeft weight="bold" size={24} color="#000" />
               </TouchableOpacity>
               <Text className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
                 {isDailyPrompt ? "Today's Prompt" : params.senderName ? `Prompt by ${params.senderName}` : 'Prompt'}
@@ -340,7 +340,7 @@ export default function ComposePage() {
           <ScrollView className="flex-1" contentContainerStyle={{ paddingBottom: 20 }} scrollEnabled={!isDraw}>
             {/* Prompt text */}
             <View className="px-8 py-5">
-              <Text className="text-xl font-bold text-black text-center">
+              <Text className="text-xl font-bold text-black text-center font-heading">
                 {isDebate ? params.promptText : promptText}
               </Text>
             </View>
@@ -421,7 +421,7 @@ export default function ComposePage() {
                           onPress={() => { setMediaUri(null); setMediaType(null); }}
                           className="absolute top-3 right-3 bg-black/50 rounded-full p-2"
                         >
-                          <X size={18} color="white" />
+                          <X weight="bold" size={18} color="white" />
                         </TouchableOpacity>
                       </View>
                     ) : (
@@ -431,7 +431,7 @@ export default function ComposePage() {
                         style={{ aspectRatio: 16 / 9 }}
                         activeOpacity={0.6}
                       >
-                        <ImageIcon size={28} color="#9ca3af" />
+                        <ImageIcon weight="bold" size={28} color="#9ca3af" />
                         <Text className="text-sm text-gray-400 mt-2">Add a photo (optional)</Text>
                       </TouchableOpacity>
                     )}

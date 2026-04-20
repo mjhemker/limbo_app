@@ -11,7 +11,7 @@ import {
   Image,
   ScrollView,
 } from 'react-native';
-import { X, Camera, Check } from 'lucide-react-native';
+import { X, Camera, Check } from 'phosphor-react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { useAuth } from '../../contexts/AuthContext';
 import { useCreateGroupChat as useCreateCircle } from '../../hooks/useChats';
@@ -107,14 +107,14 @@ export function CircleCreationModal({ visible, onClose }: CircleCreationModalPro
         <View className="bg-white rounded-3xl p-6">
           {/* Header */}
           <View className="flex-row items-center justify-between mb-6">
-            <Text className="text-2xl font-black text-gray-900">
+            <Text className="text-2xl font-black text-gray-900 font-heading">
               Create Circle
             </Text>
             <TouchableOpacity
               onPress={onClose}
               className="w-8 h-8 items-center justify-center"
             >
-              <X size={24} color="#111827" />
+              <X weight="bold" size={24} color="#111827" />
             </TouchableOpacity>
           </View>
 
@@ -139,12 +139,12 @@ export function CircleCreationModal({ visible, onClose }: CircleCreationModalPro
                       {name.trim()[0].toUpperCase()}
                     </Text>
                   ) : (
-                    <Camera size={32} color="white" />
+                    <Camera weight="bold" size={32} color="white" />
                   )}
                 </View>
               )}
               <View className="absolute bottom-0 right-0 bg-black rounded-full p-2">
-                <Camera size={16} color="white" />
+                <Camera weight="bold" size={16} color="white" />
               </View>
             </TouchableOpacity>
             <Text className="text-xs text-gray-500 mt-2">
@@ -207,7 +207,7 @@ export function CircleCreationModal({ visible, onClose }: CircleCreationModalPro
                     style={{ backgroundColor: option.color }}
                   >
                     {themeColor === option.color && (
-                      <Check size={20} color="white" strokeWidth={3} />
+                      <Check weight="bold" size={20} color="white" />
                     )}
                   </View>
                   <Text className="text-xs text-gray-600 mt-1">{option.name}</Text>

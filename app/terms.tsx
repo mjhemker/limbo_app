@@ -1,7 +1,7 @@
 import { ScrollView, Text, View, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { ArrowLeft } from 'lucide-react-native';
+import { ArrowLeft } from 'phosphor-react-native';
 
 export default function TermsOfServicePage() {
   const router = useRouter();
@@ -11,15 +11,15 @@ export default function TermsOfServicePage() {
       {/* Header */}
       <View className="flex-row items-center px-4 py-3 border-b border-gray-200">
         <TouchableOpacity onPress={() => router.back()}>
-          <ArrowLeft size={24} color="#111827" />
+          <ArrowLeft weight="bold" size={24} color="#111827" />
         </TouchableOpacity>
-        <Text className="flex-1 text-lg font-semibold text-gray-900 ml-3">
+        <Text className="flex-1 text-lg font-semibold text-gray-900 ml-3 font-heading">
           Terms of Service
         </Text>
       </View>
 
       <ScrollView className="flex-1 px-5 py-6">
-        <Text className="text-2xl font-black text-gray-900 mb-4">
+        <Text className="text-2xl font-black text-gray-900 mb-4 font-heading">
           Terms of Service
         </Text>
 
@@ -30,7 +30,7 @@ export default function TermsOfServicePage() {
         <View className="gap-6">
           {/* Acceptance of Terms */}
           <View>
-            <Text className="text-lg font-bold text-gray-900 mb-2">
+            <Text className="text-lg font-bold text-gray-900 mb-2 font-heading">
               1. Acceptance of Terms
             </Text>
             <Text className="text-gray-700 leading-6">
@@ -41,7 +41,7 @@ export default function TermsOfServicePage() {
 
           {/* Description of Service */}
           <View>
-            <Text className="text-lg font-bold text-gray-900 mb-2">
+            <Text className="text-lg font-bold text-gray-900 mb-2 font-heading">
               2. Description of Service
             </Text>
             <Text className="text-gray-700 leading-6">
@@ -53,7 +53,7 @@ export default function TermsOfServicePage() {
 
           {/* User Accounts */}
           <View>
-            <Text className="text-lg font-bold text-gray-900 mb-2">
+            <Text className="text-lg font-bold text-gray-900 mb-2 font-heading">
               3. User Accounts
             </Text>
             <Text className="text-gray-700 leading-6 mb-2">
@@ -75,7 +75,7 @@ export default function TermsOfServicePage() {
 
           {/* User Content */}
           <View>
-            <Text className="text-lg font-bold text-gray-900 mb-2">
+            <Text className="text-lg font-bold text-gray-900 mb-2 font-heading">
               4. User Content
             </Text>
             <Text className="text-gray-700 leading-6">
@@ -88,7 +88,7 @@ export default function TermsOfServicePage() {
 
           {/* Prohibited Conduct */}
           <View>
-            <Text className="text-lg font-bold text-gray-900 mb-2">
+            <Text className="text-lg font-bold text-gray-900 mb-2 font-heading">
               5. Prohibited Conduct
             </Text>
             <Text className="text-gray-700 leading-6 mb-2">
@@ -113,7 +113,7 @@ export default function TermsOfServicePage() {
 
           {/* Intellectual Property */}
           <View>
-            <Text className="text-lg font-bold text-gray-900 mb-2">
+            <Text className="text-lg font-bold text-gray-900 mb-2 font-heading">
               6. Intellectual Property
             </Text>
             <Text className="text-gray-700 leading-6">
@@ -125,7 +125,7 @@ export default function TermsOfServicePage() {
 
           {/* Termination */}
           <View>
-            <Text className="text-lg font-bold text-gray-900 mb-2">
+            <Text className="text-lg font-bold text-gray-900 mb-2 font-heading">
               7. Termination
             </Text>
             <Text className="text-gray-700 leading-6">
@@ -137,7 +137,7 @@ export default function TermsOfServicePage() {
 
           {/* Disclaimer */}
           <View>
-            <Text className="text-lg font-bold text-gray-900 mb-2">
+            <Text className="text-lg font-bold text-gray-900 mb-2 font-heading">
               8. Disclaimer
             </Text>
             <Text className="text-gray-700 leading-6">
@@ -148,7 +148,7 @@ export default function TermsOfServicePage() {
 
           {/* Limitation of Liability */}
           <View>
-            <Text className="text-lg font-bold text-gray-900 mb-2">
+            <Text className="text-lg font-bold text-gray-900 mb-2 font-heading">
               9. Limitation of Liability
             </Text>
             <Text className="text-gray-700 leading-6">
@@ -159,7 +159,7 @@ export default function TermsOfServicePage() {
 
           {/* Changes to Terms */}
           <View>
-            <Text className="text-lg font-bold text-gray-900 mb-2">
+            <Text className="text-lg font-bold text-gray-900 mb-2 font-heading">
               10. Changes to Terms
             </Text>
             <Text className="text-gray-700 leading-6">
@@ -170,7 +170,7 @@ export default function TermsOfServicePage() {
 
           {/* Contact */}
           <View>
-            <Text className="text-lg font-bold text-gray-900 mb-2">
+            <Text className="text-lg font-bold text-gray-900 mb-2 font-heading">
               11. Contact
             </Text>
             <Text className="text-gray-700 leading-6">

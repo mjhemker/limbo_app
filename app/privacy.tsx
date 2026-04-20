@@ -1,7 +1,7 @@
 import { ScrollView, Text, View, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { ArrowLeft } from 'lucide-react-native';
+import { ArrowLeft } from 'phosphor-react-native';
 
 export default function PrivacyPolicyPage() {
   const router = useRouter();
@@ -11,15 +11,15 @@ export default function PrivacyPolicyPage() {
       {/* Header */}
       <View className="flex-row items-center px-4 py-3 border-b border-gray-200">
         <TouchableOpacity onPress={() => router.back()}>
-          <ArrowLeft size={24} color="#111827" />
+          <ArrowLeft weight="bold" size={24} color="#111827" />
         </TouchableOpacity>
-        <Text className="flex-1 text-lg font-semibold text-gray-900 ml-3">
+        <Text className="flex-1 text-lg font-semibold text-gray-900 ml-3 font-heading">
           Privacy Policy
         </Text>
       </View>
 
       <ScrollView className="flex-1 px-5 py-6">
-        <Text className="text-2xl font-black text-gray-900 mb-4">
+        <Text className="text-2xl font-black text-gray-900 mb-4 font-heading">
           Privacy Policy
         </Text>
 
@@ -30,7 +30,7 @@ export default function PrivacyPolicyPage() {
         <View className="gap-6">
           {/* Introduction */}
           <View>
-            <Text className="text-lg font-bold text-gray-900 mb-2">
+            <Text className="text-lg font-bold text-gray-900 mb-2 font-heading">
               1. Introduction
             </Text>
             <Text className="text-gray-700 leading-6">
@@ -42,7 +42,7 @@ export default function PrivacyPolicyPage() {
 
           {/* Data We Collect */}
           <View>
-            <Text className="text-lg font-bold text-gray-900 mb-2">
+            <Text className="text-lg font-bold text-gray-900 mb-2 font-heading">
               2. Data We Collect
             </Text>
             <Text className="text-gray-700 leading-6 mb-2">
@@ -67,7 +67,7 @@ export default function PrivacyPolicyPage() {
 
           {/* How We Use Your Data */}
           <View>
-            <Text className="text-lg font-bold text-gray-900 mb-2">
+            <Text className="text-lg font-bold text-gray-900 mb-2 font-heading">
               3. How We Use Your Data
             </Text>
             <Text className="text-gray-700 leading-6 mb-2">
@@ -92,7 +92,7 @@ export default function PrivacyPolicyPage() {
 
           {/* Data Sharing */}
           <View>
-            <Text className="text-lg font-bold text-gray-900 mb-2">
+            <Text className="text-lg font-bold text-gray-900 mb-2 font-heading">
               4. Data Sharing
             </Text>
             <Text className="text-gray-700 leading-6">
@@ -104,7 +104,7 @@ export default function PrivacyPolicyPage() {
 
           {/* Your Rights */}
           <View>
-            <Text className="text-lg font-bold text-gray-900 mb-2">
+            <Text className="text-lg font-bold text-gray-900 mb-2 font-heading">
               5. Your Rights
             </Text>
             <Text className="text-gray-700 leading-6 mb-2">
@@ -129,7 +129,7 @@ export default function PrivacyPolicyPage() {
 
           {/* Data Security */}
           <View>
-            <Text className="text-lg font-bold text-gray-900 mb-2">
+            <Text className="text-lg font-bold text-gray-900 mb-2 font-heading">
               6. Data Security
             </Text>
             <Text className="text-gray-700 leading-6">
@@ -140,7 +140,7 @@ export default function PrivacyPolicyPage() {
 
           {/* Contact Us */}
           <View>
-            <Text className="text-lg font-bold text-gray-900 mb-2">
+            <Text className="text-lg font-bold text-gray-900 mb-2 font-heading">
               7. Contact Us
             </Text>
             <Text className="text-gray-700 leading-6">

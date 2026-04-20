@@ -1,7 +1,7 @@
 import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { ArrowLeft } from 'lucide-react-native';
+import { ArrowLeft } from 'phosphor-react-native';
 import { formatHashtag } from '../../utils/hashtags';
 
 export default function HashtagPage() {
@@ -20,9 +20,9 @@ export default function HashtagPage() {
       {/* Header */}
       <View className="flex-row items-center px-4 py-3 border-b border-gray-200">
         <TouchableOpacity onPress={() => router.back()}>
-          <ArrowLeft size={24} color="#111827" />
+          <ArrowLeft weight="bold" size={24} color="#111827" />
         </TouchableOpacity>
-        <Text className="flex-1 text-lg font-semibold text-gray-900 ml-3">
+        <Text className="flex-1 text-lg font-semibold text-gray-900 ml-3 font-heading">
           #{formatHashtag(decodedTag)}
         </Text>
       </View>
@@ -31,7 +31,7 @@ export default function HashtagPage() {
         {/* Coming Soon Message */}
         <View className="flex-1 items-center justify-center p-12">
           <Text className="text-6xl mb-4">#️⃣</Text>
-          <Text className="text-xl font-bold text-gray-900 mb-2 text-center">
+          <Text className="text-xl font-bold text-gray-900 mb-2 text-center font-heading">
             Hashtag Search
           </Text>
           <Text className="text-gray-600 text-center mb-6">

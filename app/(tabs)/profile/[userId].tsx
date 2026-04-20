@@ -11,14 +11,14 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import {
-  Settings,
-  MessageCircle,
+  Gear,
+  ChatCircle,
   UserPlus,
   UserMinus,
   Calendar,
   Users,
   QrCode,
-} from 'lucide-react-native';
+} from 'phosphor-react-native';
 import { useAuth } from '../../../contexts/AuthContext';
 import { useProfile } from '../../../hooks/useProfile';
 import { useUserResponses } from '../../../hooks/useResponses';
@@ -27,7 +27,7 @@ import { useSendNudge } from '../../../hooks/useNudges';
 import { useTodaysPrompt } from '../../../hooks/usePrompt';
 import { toast } from '../../../utils/toast';
 import * as haptics from '../../../utils/haptics';
-import { Share } from 'lucide-react-native';
+import { Share as ShareIcon } from 'phosphor-react-native';
 import { shareResponse } from '../../../utils/sharing';
 import { QRCodeModal } from '../../../components/profile/QRCodeModal';
 import { StreakCalendar } from '../../../components/profile/StreakCalendar';
@@ -157,7 +157,7 @@ export default function ProfileViewPage() {
     return (
       <SafeAreaView className="flex-1 bg-white">
         <View className="flex-1 items-center justify-center px-6">
-          <Text className="text-xl font-semibold text-gray-900 text-center mb-2">
+          <Text className="text-xl font-semibold text-gray-900 text-center mb-2 font-heading">
             Profile not found
           </Text>
         </View>
@@ -192,7 +192,7 @@ export default function ProfileViewPage() {
               </Text>
             </View>
           )}
-          <Text className="text-2xl font-black text-black mb-1">
+          <Text className="text-2xl font-black text-black mb-1 font-heading">
             {profile.display_name}
           </Text>
           <Text className="text-gray-500 text-base">@{profile.username}</Text>
@@ -210,7 +210,7 @@ export default function ProfileViewPage() {
                 className="bg-gray-100 rounded-full p-3"
                 activeOpacity={0.7}
               >
-                <QrCode size={20} color="#000" />
+                <QrCode weight="bold" size={20} color="#000" />
               </TouchableOpacity>
               <TouchableOpacity
                 onPress={() => router.push('/(tabs)/profile/friends')}
@@ -272,13 +272,13 @@ export default function ProfileViewPage() {
         {/* Stats Row */}
         <View className="flex-row items-center justify-center gap-8 mb-6">
           <View className="items-center">
-            <Text className="text-2xl font-black text-black">
+            <Text className="text-2xl font-black text-black font-heading">
               {regularResponses?.length || 0}
             </Text>
             <Text className="text-gray-600 text-sm">responses</Text>
           </View>
           <View className="items-center">
-            <Text className="text-2xl font-black text-black">
+            <Text className="text-2xl font-black text-black font-heading">
               {profile.friend_count || 0}
             </Text>
             <Text className="text-gray-600 text-sm">friends</Text>
@@ -399,7 +399,7 @@ export default function ProfileViewPage() {
                       }}
                       className="absolute top-2 right-2 bg-white/90 rounded-full p-2 shadow-sm"
                     >
-                      <Share size={16} color="#FFBF00" />
+                      <ShareIcon weight="bold" size={16} color="#FFBF00" />
                     </TouchableOpacity>
                   </View>
                 </View>

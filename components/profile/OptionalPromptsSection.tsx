@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { View, Text, TouchableOpacity, Image, Modal, TextInput, Alert, ActivityIndicator } from 'react-native';
-import { Plus, X, Shuffle } from 'lucide-react-native';
+import { Plus, X, Shuffle } from 'phosphor-react-native';
 import { useRandomPrompts } from '../../hooks/usePrompt';
 import { useCreateResponse } from '../../hooks/useResponses';
 import { useAuth } from '../../contexts/AuthContext';
@@ -78,13 +78,13 @@ export function OptionalPromptsSection({
   return (
     <View className="mb-6">
       <View className="flex-row items-center justify-between mb-3">
-        <Text className="text-lg font-bold text-black">About Me</Text>
+        <Text className="text-lg font-bold text-black font-heading">About Me</Text>
         {isOwnProfile && (
           <TouchableOpacity
             onPress={handleShufflePrompts}
             className="flex-row items-center"
           >
-            <Shuffle size={16} color="#6b7280" />
+            <Shuffle weight="bold" size={16} color="#6b7280" />
             <Text className="text-sm text-gray-500 ml-1">Shuffle</Text>
           </TouchableOpacity>
         )}
@@ -122,7 +122,7 @@ export function OptionalPromptsSection({
                 onPress={() => handleSelectPrompt(prompt)}
                 className="flex-row items-center bg-gray-50 rounded-xl p-3"
               >
-                <Plus size={18} color="#FFBF00" />
+                <Plus weight="bold" size={18} color="#FFBF00" />
                 <Text className="flex-1 text-gray-800 ml-2" numberOfLines={1}>
                   {prompt.text}
                 </Text>
@@ -143,12 +143,12 @@ export function OptionalPromptsSection({
           <View className="bg-white rounded-t-3xl p-6">
             {/* Header */}
             <View className="flex-row items-center justify-between mb-4">
-              <Text className="text-xl font-bold text-black">Answer Prompt</Text>
+              <Text className="text-xl font-bold text-black font-heading">Answer Prompt</Text>
               <TouchableOpacity
                 onPress={() => setShowAnswerModal(false)}
                 className="w-8 h-8 items-center justify-center"
               >
-                <X size={24} color="#111827" />
+                <X weight="bold" size={24} color="#111827" />
               </TouchableOpacity>
             </View>
 

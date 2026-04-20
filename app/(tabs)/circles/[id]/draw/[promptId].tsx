@@ -2,7 +2,7 @@ import { useState, useRef, useMemo } from 'react';
 import { View, Text, TouchableOpacity, Dimensions, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { ArrowLeft, Undo2, Trash2 } from 'lucide-react-native';
+import { ArrowLeft, ArrowUUpLeft, Trash } from 'phosphor-react-native';
 import {
   Canvas,
   Path as SkiaPath,
@@ -152,15 +152,15 @@ export default function DrawRespondPage() {
       {/* Header */}
       <View className="flex-row items-center justify-between px-4 py-3 border-b border-gray-200">
         <TouchableOpacity onPress={() => router.back()}>
-          <ArrowLeft size={24} color="#111827" />
+          <ArrowLeft weight="bold" size={24} color="#111827" />
         </TouchableOpacity>
-        <Text className="text-lg font-semibold text-gray-900">{headerTitle}</Text>
+        <Text className="text-lg font-semibold text-gray-900 font-heading">{headerTitle}</Text>
         <View style={{ width: 24 }} />
       </View>
 
       {/* Prompt text */}
       <View className="px-6 py-4">
-        <Text className="text-xl font-bold text-gray-900 text-center">
+        <Text className="text-xl font-bold text-gray-900 text-center font-heading">
           {promptText || ''}
         </Text>
       </View>
@@ -204,7 +204,7 @@ export default function DrawRespondPage() {
       <View className="px-4 py-3">
         <View className="flex-row items-center justify-between">
           <TouchableOpacity onPress={handleUndo} disabled={completedPaths.length === 0} className="p-2">
-            <Undo2 size={24} color={completedPaths.length > 0 ? '#111827' : '#d1d5db'} />
+            <ArrowUUpLeft weight="bold" size={24} color={completedPaths.length > 0 ? '#111827' : '#d1d5db'} />
           </TouchableOpacity>
 
           <View className="flex-row items-center gap-2">
@@ -222,7 +222,7 @@ export default function DrawRespondPage() {
           </View>
 
           <TouchableOpacity onPress={handleClear} disabled={completedPaths.length === 0} className="p-2">
-            <Trash2 size={24} color={completedPaths.length > 0 ? '#EF4444' : '#d1d5db'} />
+            <Trash weight="bold" size={24} color={completedPaths.length > 0 ? '#EF4444' : '#d1d5db'} />
           </TouchableOpacity>
         </View>
       </View>

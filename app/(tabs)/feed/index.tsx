@@ -1,7 +1,7 @@
 import { View, Text, ScrollView, TouchableOpacity, RefreshControl, ActivityIndicator, Image, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { Plus, Lock, MessageCircle, Unlock, Ghost, Bell, Type, Mic, Camera, Video } from 'lucide-react-native';
+import { Plus, PlusCircle, Lock, ChatCircle, LockOpen, Ghost, Bell, TextT, Microphone, Camera, VideoCamera } from 'phosphor-react-native';
 import { ShareIcon } from '../../../components/icons/ShareIcon';
 import { useState, useEffect } from 'react';
 import { useAuth } from '../../../contexts/AuthContext';
@@ -118,7 +118,7 @@ export default function FeedPage() {
     return (
       <SafeAreaView className="flex-1 bg-white" edges={['top']}>
         <View className="flex-1 items-center justify-center px-6">
-          <Text className="text-xl font-bold text-gray-900 text-center mb-2">
+          <Text className="text-xl font-bold text-gray-900 text-center mb-2 font-heading">
             No prompt today
           </Text>
           <Text className="text-gray-600 text-center">
@@ -138,76 +138,53 @@ export default function FeedPage() {
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
         }
       >
-      {/* Today's Prompt Banner */}
+      {/* Today's Prompt + Add Response Card */}
       <View className="px-5 pt-4 pb-3">
-        <View className="flex-row items-center justify-between mb-3">
-          <Text className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
-            Today's Prompt
-          </Text>
-          <TouchableOpacity onPress={() => {}} className="p-1">
-            <ShareIcon size={26} color="#111827" />
-          </TouchableOpacity>
-        </View>
-        <TouchableOpacity onPress={() => router.push('/(tabs)/feed/prompts')}>
-          <Text className="text-2xl font-bold text-black leading-tight">
+        <View
+          className="rounded-3xl px-6 py-10"
+          style={{
+            backgroundColor: '#FFBF00',
+            shadowColor: '#000',
+            shadowOffset: { width: 0, height: 4 },
+            shadowOpacity: 0.08,
+            shadowRadius: 12,
+            elevation: 4,
+          }}
+        >
+          <View className="flex-row items-center justify-between mb-3">
+            <Text
+              className="text-sm font-semibold uppercase tracking-wide"
+              style={{ color: 'rgba(0,0,0,0.5)' }}
+            >
+              Today's Prompt
+            </Text>
+            <TouchableOpacity onPress={() => {}} className="p-1">
+              <ShareIcon size={22} color="#111827" />
+            </TouchableOpacity>
+          </View>
+          <Text
+            className="text-5xl font-bold text-black font-heading mb-5"
+            style={{ lineHeight: 48 }}
+          >
             {todaysPrompt.text}
           </Text>
-        </TouchableOpacity>
-      </View>
-
-      {/* User's Response Card */}
-      <View className="px-5 py-3">
-        <TouchableOpacity
-          onPress={() => router.push('/compose')}
-          className="bg-black rounded-3xl overflow-hidden"
-          style={{ aspectRatio: 4/3 }}
-          activeOpacity={0.8}
-        >
-          {hasPosted ? (
-            <View className="flex-1 items-center justify-center p-6">
-              {userResponse?.media_url && userResponse?.media_type === 'image' ? (
-                <Image
-                  source={{ uri: userResponse.media_url }}
-                  className="absolute inset-0 w-full h-full"
-                  resizeMode="cover"
-                />
-              ) : null}
-              {userResponse?.text_content && (
-                <Text className="text-white text-center text-base mb-3">
-                  {userResponse.text_content}
-                </Text>
-              )}
-              <Text className="text-gray-400 text-sm mt-2">
-                Tap to edit your response
-              </Text>
-            </View>
-          ) : (
-            <View className="flex-1 items-center justify-center p-6">
-              <Plus size={40} color="white" strokeWidth={2} />
-              <Text className="text-white font-semibold text-lg mt-3">
-                Add your response
-              </Text>
-              <View className="flex-row items-center mt-4 gap-4">
-                <View className="items-center">
-                  <Type size={20} color="#9ca3af" />
-                  <Text className="text-gray-400 text-xs mt-1">Text</Text>
-                </View>
-                <View className="items-center">
-                  <Camera size={20} color="#9ca3af" />
-                  <Text className="text-gray-400 text-xs mt-1">Photo</Text>
-                </View>
-                <View className="items-center">
-                  <Video size={20} color="#9ca3af" />
-                  <Text className="text-gray-400 text-xs mt-1">Video</Text>
-                </View>
-                <View className="items-center">
-                  <Mic size={20} color="#9ca3af" />
-                  <Text className="text-gray-400 text-xs mt-1">Audio</Text>
-                </View>
-              </View>
-            </View>
-          )}
-        </TouchableOpacity>
+          <View className="flex-row items-center mb-4 gap-4">
+            <TextT weight="fill" size={22} color="rgba(0,0,0,0.5)" />
+            <Camera weight="fill" size={22} color="rgba(0,0,0,0.5)" />
+            <VideoCamera weight="fill" size={22} color="rgba(0,0,0,0.5)" />
+            <Microphone weight="fill" size={22} color="rgba(0,0,0,0.5)" />
+          </View>
+          <TouchableOpacity
+            onPress={() => router.push('/compose')}
+            className="bg-black rounded-full py-4 flex-row items-center justify-center"
+            activeOpacity={0.85}
+          >
+            <PlusCircle weight="fill" size={22} color="white" />
+            <Text className="text-white font-semibold text-base ml-2">
+              {hasPosted ? 'Edit your response' : 'Add your response'}
+            </Text>
+          </TouchableOpacity>
+        </View>
       </View>
 
       {/* Feed Locked / Friends Responses */}
@@ -215,9 +192,9 @@ export default function FeedPage() {
         {!hasPosted ? (
           <View className="bg-gray-50 rounded-3xl p-8 items-center border border-gray-200">
             <View className="w-16 h-16 bg-gray-200 rounded-full items-center justify-center mb-4">
-              <Lock size={28} color="#9ca3af" />
+              <Lock weight="bold" size={28} color="#9ca3af" />
             </View>
-            <Text className="text-xl font-bold text-black text-center mb-2">
+            <Text className="text-xl font-bold text-black text-center mb-2 font-heading">
               Feed Locked
             </Text>
             <Text className="text-gray-600 text-center text-base leading-relaxed">
@@ -237,7 +214,7 @@ export default function FeedPage() {
               <View className="bg-primary-50 rounded-2xl p-4 mb-4 border border-primary-200">
                 <View className="flex-row items-center justify-between">
                   <View className="flex-row items-center">
-                    <Unlock size={20} color="#FFBF00" />
+                    <LockOpen weight="bold" size={20} color="#FFBF00" />
                     <Text className="text-black font-semibold ml-2">
                       {remainingUnlocks} unlocks remaining
                     </Text>
@@ -246,7 +223,7 @@ export default function FeedPage() {
                     onPress={() => router.push('/(tabs)/messages')}
                     className="bg-black rounded-full px-3 py-1.5 flex-row items-center"
                   >
-                    <MessageCircle size={14} color="white" />
+                    <ChatCircle weight="bold" size={14} color="white" />
                     <Text className="text-white text-xs font-semibold ml-1">
                       DM +3
                     </Text>
@@ -303,7 +280,7 @@ export default function FeedPage() {
                       </View>
                       {!unlocked && (
                         <View className="bg-gray-200 rounded-full p-2">
-                          <Lock size={16} color="#6b7280" />
+                          <Lock weight="bold" size={16} color="#6b7280" />
                         </View>
                       )}
                     </View>
@@ -340,7 +317,7 @@ export default function FeedPage() {
                             onPress={() => router.push(`/(tabs)/messages/${response.user?.id}`)}
                             className="flex-row items-center bg-gray-100 rounded-full px-4 py-2"
                           >
-                            <MessageCircle size={16} color="#000" />
+                            <ChatCircle weight="bold" size={16} color="#000" />
                             <Text className="text-black text-sm font-medium ml-2">Message</Text>
                           </TouchableOpacity>
                           <TouchableOpacity
@@ -360,7 +337,7 @@ export default function FeedPage() {
                             }}
                             className="flex-row items-center bg-primary-100 rounded-full px-4 py-2"
                           >
-                            <Bell size={16} color="#FFBF00" />
+                            <Bell weight="bold" size={16} color="#FFBF00" />
                             <Text className="text-black text-sm font-medium ml-2">Nudge</Text>
                           </TouchableOpacity>
                         </View>
@@ -369,7 +346,7 @@ export default function FeedPage() {
                       <View className="px-4 pb-4">
                         {/* Blurred/Locked Content */}
                         <View className="bg-gray-200 rounded-2xl items-center justify-center p-8">
-                          <Lock size={32} color="#9ca3af" />
+                          <Lock weight="bold" size={32} color="#9ca3af" />
                           <Text className="text-gray-500 font-semibold mt-2 text-center">
                             Response Locked
                           </Text>
@@ -389,7 +366,7 @@ export default function FeedPage() {
           </View>
         ) : (
           <View className="bg-gray-50 rounded-3xl p-8 items-center border border-gray-200">
-            <Text className="text-lg font-semibold text-black text-center mb-2">
+            <Text className="text-lg font-semibold text-black text-center mb-2 font-heading">
               Your friends haven't posted yet
             </Text>
             <Text className="text-gray-600 text-center">
@@ -403,8 +380,8 @@ export default function FeedPage() {
       {hasPosted && limboFriends && limboFriends.length > 0 && (
         <View className="px-5 mt-6">
           <View className="flex-row items-center mb-4">
-            <Ghost size={20} color="#9ca3af" />
-            <Text className="text-lg font-bold text-gray-500 ml-2">
+            <Ghost weight="bold" size={20} color="#9ca3af" />
+            <Text className="text-lg font-bold text-gray-500 ml-2 font-heading">
               Limbo Zone
             </Text>
             <View className="bg-gray-200 rounded-full px-2 py-0.5 ml-2">
@@ -448,7 +425,7 @@ export default function FeedPage() {
                     className="bg-primary-500 rounded-full px-4 py-2 flex-row items-center"
                     disabled={rescueFriend.isPending}
                   >
-                    <Bell size={14} color="#000" />
+                    <Bell weight="bold" size={14} color="#000" />
                     <Text className="text-black text-xs font-semibold ml-1">
                       Nudge
                     </Text>

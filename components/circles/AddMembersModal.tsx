@@ -9,7 +9,7 @@ import {
   Image,
   Alert,
 } from 'react-native';
-import { X, UserPlus, Search } from 'lucide-react-native';
+import { X, UserPlus, MagnifyingGlass } from 'phosphor-react-native';
 import { useFriends } from '../../hooks/useFriends';
 import { useAuth } from '../../contexts/AuthContext';
 import { useChatMembers as useCircleMembers } from '../../hooks/useChats';
@@ -55,21 +55,21 @@ export function AddMembersModal({ visible, onClose, circleId }: AddMembersModalP
         <View className="flex-1 mt-20 bg-white rounded-t-3xl">
           {/* Header */}
           <View className="flex-row items-center justify-between px-6 py-4 border-b border-gray-200">
-            <Text className="text-xl font-bold text-gray-900">
+            <Text className="text-xl font-bold text-gray-900 font-heading">
               Add Members
             </Text>
             <TouchableOpacity
               onPress={onClose}
               className="w-8 h-8 items-center justify-center"
             >
-              <X size={24} color="#111827" />
+              <X weight="bold" size={24} color="#111827" />
             </TouchableOpacity>
           </View>
 
           {/* Search */}
           <View className="px-6 py-4">
             <View className="flex-row items-center bg-gray-100 rounded-xl px-4 py-3">
-              <Search size={20} color="#6b7280" />
+              <MagnifyingGlass weight="bold" size={20} color="#6b7280" />
               <TextInput
                 className="flex-1 ml-2 text-base"
                 placeholder="Search friends..."
@@ -113,7 +113,7 @@ export function AddMembersModal({ visible, onClose, circleId }: AddMembersModalP
                     onPress={() => handleAddMember(friend.friend.id, friend.friend.display_name)}
                     className="bg-primary-100 rounded-lg px-4 py-2"
                   >
-                    <UserPlus size={18} color="#FFBF00" />
+                    <UserPlus weight="bold" size={18} color="#FFBF00" />
                   </TouchableOpacity>
                 </View>
               ))

@@ -1,6 +1,6 @@
 import { View, Text, ScrollView, TouchableOpacity, Image } from 'react-native';
 import { useRouter } from 'expo-router';
-import { Check, Plus } from 'lucide-react-native';
+import { Check, Plus } from 'phosphor-react-native';
 import { useDailyPrompts } from '../../hooks/usePrompt';
 import { useAuth } from '../../contexts/AuthContext';
 import * as haptics from '../../utils/haptics';
@@ -97,9 +97,9 @@ export function PromptStories({ userResponsePromptIds, todaysPromptId }: PromptS
                     }`}
                   >
                     {hasResponded ? (
-                      <Check size={24} color="#10B981" strokeWidth={3} />
+                      <Check weight="bold" size={24} color="#10B981" />
                     ) : (
-                      <Plus size={24} color="#FFBF00" strokeWidth={2} />
+                      <Plus weight="bold" size={24} color="#FFBF00" />
                     )}
                   </View>
                 </View>

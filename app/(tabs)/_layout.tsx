@@ -1,5 +1,5 @@
 import { Tabs, useSegments } from 'expo-router';
-import { Home, MessageCircle, User } from 'lucide-react-native';
+import { House, ChatCircle, User } from 'phosphor-react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '../../contexts/AuthContext';
 import { useUnreadCount } from '../../hooks/useMessages';
@@ -48,9 +48,12 @@ export default function TabLayout() {
         name="feed"
         options={{
           title: 'Feed',
-          tabBarIcon: ({ color, focused }) => (
-            <Home color={color} size={24} strokeWidth={focused ? 2.5 : 2} />
-          ),
+          tabBarIcon: ({ color, focused }) =>
+            focused ? (
+              <House weight="fill" color={color} size={24} />
+            ) : (
+              <House weight="bold" color={color} size={24} />
+            ),
         }}
       />
       <Tabs.Screen
@@ -58,7 +61,7 @@ export default function TabLayout() {
         options={{
           title: 'Chat',
           tabBarIcon: ({ color, focused }) => (
-            <MessageCircle color={color} size={24} strokeWidth={focused ? 2.5 : 2} />
+            <ChatCircle weight={focused ? 'fill' : 'bold'} color={color} size={24} />
           ),
           tabBarBadge: unreadCount && unreadCount > 0 ? (unreadCount > 9 ? '9+' : unreadCount) : undefined,
           tabBarBadgeStyle: {
@@ -81,7 +84,7 @@ export default function TabLayout() {
         options={{
           title: 'Profile',
           tabBarIcon: ({ color, focused }) => (
-            <User color={color} size={24} strokeWidth={focused ? 2.5 : 2} />
+            <User weight={focused ? 'fill' : 'bold'} color={color} size={24} />
           ),
         }}
       />

@@ -1,6 +1,6 @@
 import React, { Component, ReactNode } from 'react';
 import { View, Text, TouchableOpacity, ScrollView } from 'react-native';
-import { AlertCircle } from 'lucide-react-native';
+import { WarningCircle } from 'phosphor-react-native';
 
 interface ErrorBoundaryProps {
   children: ReactNode;
@@ -51,8 +51,8 @@ export default class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBo
       return (
         <View className="flex-1 bg-white items-center justify-center px-6">
           <View className="items-center mb-6">
-            <AlertCircle size={64} color="#ef4444" />
-            <Text className="text-2xl font-bold text-gray-900 mt-4 text-center">
+            <WarningCircle weight="bold" size={64} color="#ef4444" />
+            <Text className="text-2xl font-bold text-gray-900 mt-4 text-center font-heading">
               Something went wrong
             </Text>
             <Text className="text-gray-600 text-center mt-2">

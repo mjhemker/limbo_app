@@ -11,7 +11,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { ArrowLeft, Users, UserMinus, LogOut, Check, Camera, X } from 'lucide-react-native';
+import { ArrowLeft, Users, UserMinus, SignOut, Check, Camera, X } from 'phosphor-react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { useAuth } from '../../../../contexts/AuthContext';
 import { useChat as useCircle, useChatMembers as useCircleMembers, useLeaveChat as useLeaveCircle, useUpdateChat as useUpdateCircle } from '../../../../hooks/useChats';
@@ -162,7 +162,7 @@ export default function CircleSettingsPage() {
   if (!circle) {
     return (
       <SafeAreaView edges={['top']} className="flex-1 items-center justify-center bg-white px-6">
-        <Text className="text-xl font-semibold text-gray-900 text-center mb-2">
+        <Text className="text-xl font-semibold text-gray-900 text-center mb-2 font-heading">
           Circle not found
         </Text>
       </SafeAreaView>
@@ -174,9 +174,9 @@ export default function CircleSettingsPage() {
       {/* Header */}
       <View className="flex-row items-center px-4 py-3 border-b border-gray-200">
         <TouchableOpacity onPress={() => router.back()}>
-          <ArrowLeft size={24} color="#111827" />
+          <ArrowLeft weight="bold" size={24} color="#111827" />
         </TouchableOpacity>
-        <Text className="flex-1 text-lg font-semibold text-gray-900 ml-3">
+        <Text className="flex-1 text-lg font-semibold text-gray-900 ml-3 font-heading">
           Circle Settings
         </Text>
       </View>
@@ -205,7 +205,7 @@ export default function CircleSettingsPage() {
                         onPress={handleRemoveAvatar}
                         className="absolute -top-1 -right-1 w-6 h-6 bg-red-500 rounded-full items-center justify-center"
                       >
-                        <X size={14} color="white" />
+                        <X weight="bold" size={14} color="white" />
                       </TouchableOpacity>
                     </View>
                   ) : (
@@ -213,7 +213,7 @@ export default function CircleSettingsPage() {
                       className="w-20 h-20 rounded-full items-center justify-center"
                       style={{ backgroundColor: themeColor }}
                     >
-                      <Camera size={28} color="white" />
+                      <Camera weight="bold" size={28} color="white" />
                     </View>
                   )}
                 </TouchableOpacity>
@@ -276,7 +276,7 @@ export default function CircleSettingsPage() {
                       style={{ backgroundColor: option.color }}
                     >
                       {themeColor === option.color && (
-                        <Check size={20} color="white" strokeWidth={3} />
+                        <Check weight="bold" size={20} color="white" />
                       )}
                     </View>
                     <Text className="text-xs text-gray-600 mt-1">{option.name}</Text>
@@ -296,7 +296,7 @@ export default function CircleSettingsPage() {
             </View>
           ) : (
             <View className="mb-6 p-4 bg-gray-50 rounded-lg">
-              <Text className="text-lg font-semibold text-gray-900 mb-2">
+              <Text className="text-lg font-semibold text-gray-900 mb-2 font-heading">
                 {circle.name}
               </Text>
               {circle.description && (
@@ -310,7 +310,7 @@ export default function CircleSettingsPage() {
           {/* Members Section */}
           <View className="mb-6">
             <View className="flex-row items-center justify-between mb-3">
-              <Text className="text-lg font-semibold text-gray-900">
+              <Text className="text-lg font-semibold text-gray-900 font-heading">
                 Members ({members?.length || 0})
               </Text>
               {isAdmin && (
@@ -366,7 +366,7 @@ export default function CircleSettingsPage() {
                         onPress={() => handleRemoveMember(member.user_id, member.user?.display_name)}
                         className="ml-3"
                       >
-                        <UserMinus size={20} color="#ef4444" />
+                        <UserMinus weight="bold" size={20} color="#ef4444" />
                       </TouchableOpacity>
                     )}
                   </View>
@@ -374,7 +374,7 @@ export default function CircleSettingsPage() {
               </View>
             ) : (
               <View className="bg-gray-50 rounded-lg p-6 items-center">
-                <Users size={32} color="#9ca3af" />
+                <Users weight="bold" size={32} color="#9ca3af" />
                 <Text className="text-gray-600 text-center mt-2">
                   No members yet
                 </Text>
@@ -387,7 +387,7 @@ export default function CircleSettingsPage() {
             onPress={handleLeaveCircle}
             className="bg-red-50 border border-red-200 rounded-lg p-4 flex-row items-center justify-center"
           >
-            <LogOut size={20} color="#ef4444" />
+            <SignOut weight="bold" size={20} color="#ef4444" />
             <Text className="text-red-600 font-semibold ml-2">
               Leave Circle
             </Text>

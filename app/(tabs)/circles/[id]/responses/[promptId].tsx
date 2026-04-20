@@ -13,7 +13,7 @@ import {
 const SCREEN_WIDTH = Dimensions.get('window').width;
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { ArrowLeft } from 'lucide-react-native';
+import { ArrowLeft } from 'phosphor-react-native';
 import { useAuth } from '../../../../../contexts/AuthContext';
 import { useChatPromptResponses } from '../../../../../hooks/useChats';
 import { responsesService } from '../../../../../services/supabase/responses';
@@ -69,17 +69,17 @@ export default function ResponsesViewPage() {
       {/* Header */}
       <View className="flex-row items-center px-4 py-3 border-b border-gray-200">
         <TouchableOpacity onPress={() => router.back()}>
-          <ArrowLeft size={24} color="#111827" />
+          <ArrowLeft weight="bold" size={24} color="#111827" />
         </TouchableOpacity>
         <View className="flex-1 ml-3">
-          <Text className="text-lg font-semibold text-gray-900">{headerTitle}</Text>
+          <Text className="text-lg font-semibold text-gray-900 font-heading">{headerTitle}</Text>
           <Text className="text-sm text-gray-500">{responses?.length || 0} responses</Text>
         </View>
       </View>
 
       {/* Prompt */}
       <View className="px-6 py-5 border-b border-gray-100">
-        <Text className="text-xl font-bold text-gray-900 text-center">
+        <Text className="text-xl font-bold text-gray-900 text-center font-heading">
           {promptText || ''}
         </Text>
       </View>

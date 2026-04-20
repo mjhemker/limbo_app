@@ -25,7 +25,7 @@ export default function CircleDetailPage() {
   if (!circle) {
     return (
       <SafeAreaView edges={['top']} className="flex-1 items-center justify-center bg-white px-6">
-        <Text className="text-xl font-semibold text-gray-900 text-center mb-2">
+        <Text className="text-xl font-semibold text-gray-900 text-center mb-2 font-heading">
           Circle not found
         </Text>
       </SafeAreaView>
@@ -39,7 +39,7 @@ export default function CircleDetailPage() {
       avatarUrl={circle.avatar_url}
       avatarFallback={circle.name?.[0]?.toUpperCase()}
       avatarColor={circle.theme_color || '#4DB6AC'}
-      onBack={() => router.replace('/(tabs)/circles')}
+      onBack={() => router.replace('/(tabs)/messages')}
       onSettingsPress={() => router.push('/(tabs)/circles/' + id + '/settings')}
       chatId={id}
       messages={messages}

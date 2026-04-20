@@ -83,7 +83,7 @@ export function StreakCalendar({ responseDates, streak }: StreakCalendarProps) {
       {/* Header with streak */}
       <View className="flex-row items-center justify-between mb-4">
         <View>
-          <Text className="text-lg font-bold text-black">Activity</Text>
+          <Text className="text-lg font-bold text-black font-heading">Activity</Text>
           <Text className="text-sm text-gray-500">{totalResponses} total responses</Text>
         </View>
         <View className="flex-row items-center bg-orange-100 px-3 py-1.5 rounded-full">

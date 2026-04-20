@@ -12,7 +12,7 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
-import { Camera, Upload } from 'lucide-react-native';
+import { Camera, Upload } from 'phosphor-react-native';
 import { useAuth } from '../../contexts/AuthContext';
 import { useUpdateProfile } from '../../hooks/useProfile';
 import { profilesService } from '../../services/supabase/profiles';
@@ -165,7 +165,7 @@ export default function ProfileSetupScreen() {
         <View className="flex-1 px-8">
         {/* Header */}
         <View className="mb-10">
-          <Text className="text-3xl font-black text-black mb-2">
+          <Text className="text-3xl font-black text-black mb-2 font-heading">
             Complete Your Profile
           </Text>
           <Text className="text-gray-600 text-base">
@@ -193,11 +193,11 @@ export default function ProfileSetupScreen() {
               />
             ) : (
               <View className="w-28 h-28 rounded-full bg-gray-100 items-center justify-center">
-                <Upload size={36} color="#9ca3af" />
+                <Upload weight="bold" size={36} color="#9ca3af" />
               </View>
             )}
             <View className="absolute bottom-0 right-0 bg-black rounded-full p-2.5">
-              <Camera size={18} color="white" />
+              <Camera weight="bold" size={18} color="white" />
             </View>
           </TouchableOpacity>
           <Text className="text-sm text-gray-500 mt-3">

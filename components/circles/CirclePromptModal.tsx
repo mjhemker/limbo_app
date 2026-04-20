@@ -9,7 +9,7 @@ import {
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
-import { X } from 'lucide-react-native';
+import { X } from 'phosphor-react-native';
 import { useAuth } from '../../contexts/AuthContext';
 import { useCreateChatPrompt as useCreateCirclePrompt } from '../../hooks/useChats';
 import { toast } from '../../utils/toast';
@@ -67,14 +67,14 @@ export function CirclePromptModal({ visible, onClose, circleId }: CirclePromptMo
         <View className="bg-white rounded-3xl p-6">
           {/* Header */}
           <View className="flex-row items-center justify-between mb-6">
-            <Text className="text-2xl font-black text-gray-900">
+            <Text className="text-2xl font-black text-gray-900 font-heading">
               Create Prompt
             </Text>
             <TouchableOpacity
               onPress={onClose}
               className="w-8 h-8 items-center justify-center"
             >
-              <X size={24} color="#111827" />
+              <X weight="bold" size={24} color="#111827" />
             </TouchableOpacity>
           </View>
 

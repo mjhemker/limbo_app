@@ -11,7 +11,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { ArrowLeft, Search, UserPlus, Check, X, Clock, SortAsc, Users2 } from 'lucide-react-native';
+import { ArrowLeft, MagnifyingGlass, UserPlus, Check, X, Clock, SortAscending, UsersThree } from 'phosphor-react-native';
 import { useAuth } from '../../../contexts/AuthContext';
 import {
   useFriends,
@@ -124,9 +124,9 @@ export default function FriendsPage() {
       <View className="px-4 py-3 border-b border-gray-200">
         <View className="flex-row items-center mb-3">
           <TouchableOpacity onPress={() => router.back()}>
-            <ArrowLeft size={24} color="#111827" />
+            <ArrowLeft weight="bold" size={24} color="#111827" />
           </TouchableOpacity>
-          <Text className="flex-1 text-lg font-semibold text-gray-900 ml-3">
+          <Text className="flex-1 text-lg font-semibold text-gray-900 ml-3 font-heading">
             Friends
           </Text>
         </View>
@@ -134,7 +134,7 @@ export default function FriendsPage() {
         {/* Search (for find tab) */}
         {activeTab === 'find' && (
           <View className="flex-row items-center bg-gray-100 rounded-lg px-3 py-2">
-            <Search size={20} color="#6b7280" />
+            <MagnifyingGlass weight="bold" size={20} color="#6b7280" />
             <TextInput
               className="flex-1 ml-2 text-base"
               placeholder="Search by username or email"
@@ -215,7 +215,8 @@ export default function FriendsPage() {
                         : 'bg-gray-100 border border-gray-200'
                     }`}
                   >
-                    <Users2
+                    <UsersThree
+                      weight="bold"
                       size={16}
                       color={friendSortOption === 'all' ? 'white' : '#6b7280'}
                     />
@@ -236,6 +237,7 @@ export default function FriendsPage() {
                     }`}
                   >
                     <Clock
+                      weight="bold"
                       size={16}
                       color={friendSortOption === 'recent' ? 'white' : '#6b7280'}
                     />
@@ -255,7 +257,8 @@ export default function FriendsPage() {
                         : 'bg-gray-100 border border-gray-200'
                     }`}
                   >
-                    <SortAsc
+                    <SortAscending
+                      weight="bold"
                       size={16}
                       color={friendSortOption === 'alphabetical' ? 'white' : '#6b7280'}
                     />
@@ -314,7 +317,7 @@ export default function FriendsPage() {
                       onPress={() => handleRemoveFriend(friend.friendshipId)}
                       className="ml-3"
                     >
-                      <X size={20} color="#ef4444" />
+                      <X weight="bold" size={20} color="#ef4444" />
                     </TouchableOpacity>
                   </View>
                 ))}
@@ -368,14 +371,14 @@ export default function FriendsPage() {
                         onPress={() => handleAcceptRequest(request.id)}
                         className="flex-1 bg-black rounded-lg py-2 flex-row items-center justify-center"
                       >
-                        <Check size={18} color="white" />
+                        <Check weight="bold" size={18} color="white" />
                         <Text className="text-white font-semibold ml-1">Accept</Text>
                       </TouchableOpacity>
                       <TouchableOpacity
                         onPress={() => handleDeclineRequest(request.id)}
                         className="flex-1 bg-gray-200 rounded-lg py-2 flex-row items-center justify-center"
                       >
-                        <X size={18} color="#111827" />
+                        <X weight="bold" size={18} color="#111827" />
                         <Text className="text-gray-900 font-semibold ml-1">Decline</Text>
                       </TouchableOpacity>
                     </View>
@@ -430,7 +433,7 @@ export default function FriendsPage() {
                       onPress={() => handleSendRequest(result.id)}
                       className="bg-primary-100 rounded-lg px-3 py-2"
                     >
-                      <UserPlus size={18} color="#FFBF00" />
+                      <UserPlus weight="bold" size={18} color="#FFBF00" />
                     </TouchableOpacity>
                   </View>
                 ))}
@@ -444,7 +447,7 @@ export default function FriendsPage() {
               </View>
             ) : (
               <View className="bg-gray-50 rounded-lg p-8 items-center">
-                <Search size={48} color="#9ca3af" />
+                <MagnifyingGlass weight="bold" size={48} color="#9ca3af" />
                 <Text className="text-gray-600 text-center mt-4">
                   Search for friends
                 </Text>
@@ -463,7 +466,7 @@ export default function FriendsPage() {
                 onPress={() => setShowInviteModal(true)}
                 className="bg-primary-500 rounded-full py-3.5 flex-row items-center justify-center"
               >
-                <UserPlus size={20} color="#000" />
+                <UserPlus weight="bold" size={20} color="#000" />
                 <Text className="text-black font-bold ml-2">Invite Friends via SMS</Text>
               </TouchableOpacity>
             </View>

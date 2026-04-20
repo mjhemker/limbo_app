@@ -4,7 +4,7 @@ import Animated, {
   SlideInDown,
   SlideOutUp,
 } from 'react-native-reanimated';
-import { WifiOff } from 'lucide-react-native';
+import { WifiSlash } from 'phosphor-react-native';
 
 // Lazy load NetInfo to prevent potential crashes
 let NetInfo: any;
@@ -60,7 +60,7 @@ export function OfflineIndicator() {
         paddingTop: 48, // Account for status bar
       }}
     >
-      <WifiOff size={18} color="white" />
+      <WifiSlash weight="bold" size={18} color="white" />
       <Text className="text-white font-semibold ml-2">
         No internet connection
       </Text>

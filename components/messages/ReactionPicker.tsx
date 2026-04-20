@@ -56,7 +56,7 @@ export function ReactionPicker({
             {/* Header */}
             <View className="items-center mb-4">
               <View className="w-12 h-1 bg-gray-300 rounded-full mb-4" />
-              <Text className="text-lg font-bold text-gray-900">
+              <Text className="text-lg font-bold text-gray-900 font-heading">
                 React to Message
               </Text>
             </View>

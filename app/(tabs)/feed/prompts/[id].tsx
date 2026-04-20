@@ -1,7 +1,7 @@
 import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator, Image } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { ArrowLeft, Heart } from 'lucide-react-native';
+import { ArrowLeft, Heart } from 'phosphor-react-native';
 import { useAuth } from '../../../../contexts/AuthContext';
 import { usePromptById } from '../../../../hooks/usePrompt';
 import { useFriendsResponses } from '../../../../hooks/useResponses';
@@ -24,7 +24,7 @@ export default function PromptDetailPage() {
   if (!prompt) {
     return (
       <SafeAreaView edges={['top']} className="flex-1 items-center justify-center bg-white px-6">
-        <Text className="text-xl font-semibold text-gray-900 text-center mb-2">
+        <Text className="text-xl font-semibold text-gray-900 text-center mb-2 font-heading">
           Prompt not found
         </Text>
       </SafeAreaView>
@@ -36,9 +36,9 @@ export default function PromptDetailPage() {
       {/* Header */}
       <View className="flex-row items-center px-4 py-3 border-b border-gray-200">
         <TouchableOpacity onPress={() => router.back()}>
-          <ArrowLeft size={24} color="#111827" />
+          <ArrowLeft weight="bold" size={24} color="#111827" />
         </TouchableOpacity>
-        <Text className="flex-1 text-lg font-semibold text-gray-900 ml-3">
+        <Text className="flex-1 text-lg font-semibold text-gray-900 ml-3 font-heading">
           Prompt Responses
         </Text>
       </View>
@@ -54,7 +54,7 @@ export default function PromptDetailPage() {
                 year: 'numeric',
               })}
           </Text>
-          <Text className="text-xl font-bold text-gray-900">
+          <Text className="text-xl font-bold text-gray-900 font-heading">
             {prompt.text}
           </Text>
         </View>
@@ -117,7 +117,7 @@ export default function PromptDetailPage() {
                   {/* Reactions Placeholder */}
                   <View className="flex-row items-center pt-3 border-t border-gray-100">
                     <TouchableOpacity className="flex-row items-center">
-                      <Heart size={20} color="#ef4444" />
+                      <Heart weight="bold" size={20} color="#ef4444" />
                       <Text className="ml-2 text-sm text-gray-600">React</Text>
                     </TouchableOpacity>
                   </View>

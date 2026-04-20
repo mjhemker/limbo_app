@@ -7,6 +7,14 @@ module.exports = {
   presets: [require('nativewind/preset')],
   theme: {
     extend: {
+      fontFamily: {
+        heading: ['BricolageGrotesque_700Bold'],
+        'heading-semibold': ['BricolageGrotesque_600SemiBold'],
+        'heading-regular': ['BricolageGrotesque_400Regular'],
+        sans: ['Lato_400Regular'],
+        'sans-bold': ['Lato_700Bold'],
+        'sans-black': ['Lato_900Black'],
+      },
       colors: {
         // Primary amber/orange theme from spec
         primary: {

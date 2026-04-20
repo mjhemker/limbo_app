@@ -1,5 +1,5 @@
 import { Modal, View, Image, TouchableOpacity, Dimensions } from 'react-native';
-import { X } from 'lucide-react-native';
+import { X } from 'phosphor-react-native';
 import { GestureDetector, Gesture } from 'react-native-gesture-handler';
 import Animated, {
   useAnimatedStyle,
@@ -124,7 +124,7 @@ export default function ImageLightbox({ visible, imageUri, onClose }: ImageLight
           onPress={handleClose}
           className="absolute top-12 right-4 z-10 bg-black/50 rounded-full p-2"
         >
-          <X size={24} color="white" />
+          <X weight="bold" size={24} color="white" />
         </TouchableOpacity>
 
         {/* Image */}

@@ -1,5 +1,5 @@
 import { View, Text, Modal, TouchableOpacity, Share as RNShare, Alert } from 'react-native';
-import { X, Share, Download } from 'lucide-react-native';
+import { X, Share, Download } from 'phosphor-react-native';
 import QRCode from 'react-native-qrcode-svg';
 import * as haptics from '../../utils/haptics';
 import { DEEP_LINKING } from '../../lib/constants';
@@ -55,12 +55,12 @@ export function QRCodeModal({
         >
           {/* Header */}
           <View className="flex-row items-center justify-between mb-6">
-            <Text className="text-xl font-black text-black">My QR Code</Text>
+            <Text className="text-xl font-black text-black font-heading">My QR Code</Text>
             <TouchableOpacity
               onPress={onClose}
               className="w-8 h-8 items-center justify-center"
             >
-              <X size={24} color="#111827" />
+              <X weight="bold" size={24} color="#111827" />
             </TouchableOpacity>
           </View>
 
@@ -82,7 +82,7 @@ export function QRCodeModal({
 
           {/* User Info */}
           <View className="items-center mb-6">
-            <Text className="text-lg font-bold text-black">{displayName}</Text>
+            <Text className="text-lg font-bold text-black font-heading">{displayName}</Text>
             <Text className="text-gray-500">@{username}</Text>
           </View>
 
@@ -97,7 +97,7 @@ export function QRCodeModal({
             className="bg-black rounded-full py-3.5 flex-row items-center justify-center"
             activeOpacity={0.7}
           >
-            <Share size={18} color="white" />
+            <Share weight="bold" size={18} color="white" />
             <Text className="text-white font-semibold ml-2">Share Profile Link</Text>
           </TouchableOpacity>
         </TouchableOpacity>

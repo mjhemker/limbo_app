@@ -3,7 +3,7 @@ import { View, Text, Image, TouchableOpacity, ActivityIndicator } from 'react-na
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { UserPlus } from 'lucide-react-native';
+import { UserPlus } from 'phosphor-react-native';
 import { useAuth } from '../contexts/AuthContext';
 import { useProfile } from '../hooks/useProfile';
 import { useSendFriendRequest } from '../hooks/useFriends';
@@ -70,7 +70,7 @@ export default function InvitePage() {
   if (!inviterProfile) {
     return (
       <SafeAreaView edges={['top']} className="flex-1 items-center justify-center bg-white px-6">
-        <Text className="text-xl font-semibold text-gray-900 text-center mb-2">
+        <Text className="text-xl font-semibold text-gray-900 text-center mb-2 font-heading">
           Invite not found
         </Text>
         <Text className="text-gray-600 text-center mb-6">
@@ -103,14 +103,14 @@ export default function InvitePage() {
               </Text>
             </View>
           )}
-          <Text className="text-2xl font-bold text-gray-900 text-center mb-2">
+          <Text className="text-2xl font-bold text-gray-900 text-center mb-2 font-heading">
             {inviterProfile.display_name}
           </Text>
           <Text className="text-gray-600 text-center mb-4">
             @{inviterProfile.username}
           </Text>
           <View className="flex-row items-center bg-primary-50 rounded-lg px-4 py-2">
-            <UserPlus size={20} color="#FFBF00" />
+            <UserPlus weight="bold" size={20} color="#FFBF00" />
             <Text className="text-primary-500 font-medium ml-2">
               invited you to Limbo
             </Text>
