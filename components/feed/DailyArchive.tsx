@@ -14,8 +14,6 @@ export function DailyArchive({ userId, animKey = 0 }: DailyArchiveProps) {
 
   if (isLoading || !archive) return null;
 
-  const answeredCount = archive.filter((day) => day.hasAnswered).length;
-
   const handleDayPress = (day: DailyArchiveItem) => {
     if (!day.prompt) return;
     haptics.lightImpact();
@@ -26,14 +24,9 @@ export function DailyArchive({ userId, animKey = 0 }: DailyArchiveProps) {
     <View className="px-5 mb-4">
       {/* Section header */}
       <View className="flex-row items-center justify-between mb-3">
-        <View>
-          <Text className="text-[16px] font-extrabold text-ink" style={{ letterSpacing: -0.3 }}>
-            Daily Archive
-          </Text>
-          <Text className="text-[12px] text-ink-soft font-medium">
-            Last 7 days · {answeredCount} of 7 done
-          </Text>
-        </View>
+        <Text className="text-[16px] font-extrabold text-ink" style={{ letterSpacing: -0.3 }}>
+          Daily Archive
+        </Text>
         <TouchableOpacity onPress={() => router.push('/(tabs)/feed/prompts')}>
           <Text className="text-[11px] font-extrabold text-ink-soft uppercase tracking-wide">
             See all

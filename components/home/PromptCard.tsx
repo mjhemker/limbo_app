@@ -37,6 +37,7 @@ export type PromptCardProps = {
   typeInfo?: string;
   headerRight?: ReactNode;
   content?: ReactNode;
+  contentBare?: boolean;
   label?: string;
   hideButton?: boolean;
   entering?: any;
@@ -72,6 +73,7 @@ export default function PromptCard({
   typeInfo,
   headerRight,
   content,
+  contentBare = false,
   label,
   hideButton = false,
   entering,
@@ -144,15 +146,14 @@ export default function PromptCard({
           {prompt.text}
         </Text>
 
-        {/* CONTENT SLOT (themed inverse) */}
+        {/* CONTENT SLOT — themed inverse inset by default, transparent if contentBare */}
         {content != null && (
           <View
-            style={{
-              backgroundColor: config.primary,
-              borderRadius: 14,
-              padding: 14,
-              marginTop: 16,
-            }}
+            style={
+              contentBare
+                ? { marginTop: 16 }
+                : { backgroundColor: config.primary, borderRadius: 14, padding: 14, marginTop: 16 }
+            }
           >
             {content}
           </View>

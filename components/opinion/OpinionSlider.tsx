@@ -7,8 +7,8 @@ import * as haptics from '../../utils/haptics';
 import PromptCard from '../home/PromptCard';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
-// Card has px-5 outer (20) + p-5 (20) + inner content padding 14 + small slack
-const SLIDER_WIDTH = SCREEN_WIDTH - 20 * 2 - 20 * 2 - 14 * 2;
+// Card has px-5 outer (20) + p-5 card padding (20). No inner inset (contentBare).
+const SLIDER_WIDTH = SCREEN_WIDTH - 20 * 2 - 20 * 2;
 const THUMB_SIZE = 26;
 
 /**
@@ -148,13 +148,14 @@ export default function OpinionSlider({
       onStartShouldSetPanResponder: () => !hasSubmitted && !topic?.has_voted,
       onMoveShouldSetPanResponder: () => !hasSubmitted && !topic?.has_voted,
       onPanResponderTerminationRequest: () => false,
-      onPanResponderGrant: (_, gestureState) => {
+      onPanResponderGrant: (evt) => {
         isDragging.current = true;
         onSliderInteractionChange?.(true);
         haptics.lightImpact();
-        // Approximate slider left edge (page x). Best-effort; will recalibrate from moveX.
-        const trackOriginX = 40 + 14;
-        const newValue = Math.max(0, Math.min(1, (gestureState.x0 - trackOriginX) / SLIDER_WIDTH));
+        // locationX is the touch position relative to the touched View (h-12 wrapper),
+        // which is the exact same width as the slider track, so no origin offset needed.
+        const x = evt.nativeEvent.locationX;
+        const newValue = Math.max(0, Math.min(1, x / SLIDER_WIDTH));
         setSliderValue(newValue);
         thumbPosition.setValue(newValue * SLIDER_WIDTH - THUMB_SIZE / 2);
         Animated.spring(thumbScale, {
@@ -163,9 +164,9 @@ export default function OpinionSlider({
           friction: 5,
         }).start();
       },
-      onPanResponderMove: (_, gestureState) => {
-        const trackOriginX = 40 + 14;
-        const newValue = Math.max(0, Math.min(1, (gestureState.moveX - trackOriginX) / SLIDER_WIDTH));
+      onPanResponderMove: (evt) => {
+        const x = evt.nativeEvent.locationX;
+        const newValue = Math.max(0, Math.min(1, x / SLIDER_WIDTH));
         setSliderValue(newValue);
         thumbPosition.setValue(newValue * SLIDER_WIDTH - THUMB_SIZE / 2);
       },
@@ -230,14 +231,15 @@ export default function OpinionSlider({
       }
       onPress={answered ? navigateToOpinions : undefined}
       onAnswerPress={answered ? navigateToOpinions : handleSubmit}
+      contentBare={!showResults}
       content={
         !showResults ? (
           <View>
             <View className="flex-row justify-between mb-2">
-              <Text className="text-[12px] font-bold text-ink" numberOfLines={1}>
+              <Text className="text-[12px] font-bold text-white" numberOfLines={1}>
                 {topic.left_label}
               </Text>
-              <Text className="text-[12px] font-bold text-ink" numberOfLines={1}>
+              <Text className="text-[12px] font-bold text-white" numberOfLines={1}>
                 {topic.right_label}
               </Text>
             </View>
@@ -248,10 +250,12 @@ export default function OpinionSlider({
                   position: 'absolute',
                   top: '50%',
                   width: SLIDER_WIDTH,
-                  height: 8,
-                  borderRadius: 4,
+                  height: 12,
+                  borderRadius: 6,
+                  borderWidth: 2,
+                  borderColor: '#FFFFFF',
                   overflow: 'hidden',
-                  transform: [{ translateY: -4 }],
+                  transform: [{ translateY: -6 }],
                 }}
               >
                 <LinearGradient
@@ -285,10 +289,7 @@ export default function OpinionSlider({
               />
             </View>
 
-            <Text
-              className="text-center font-extrabold text-[15px] mt-1"
-              style={{ color: getOpinionColor(sliderValue) }}
-            >
+            <Text className="text-center font-extrabold text-[15px] mt-1 text-white">
               {Math.round(sliderValue * 100)}%
             </Text>
           </View>
