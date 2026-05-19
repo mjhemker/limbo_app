@@ -1,5 +1,5 @@
 import { View, Text, ScrollView, TouchableOpacity, RefreshControl, ActivityIndicator, Image, Dimensions, Pressable, Alert } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { Ghost, Bell, ChevronRight, MoreHorizontal } from 'lucide-react-native';
 import ReportModal from '../../../components/modals/ReportModal';
@@ -165,6 +165,7 @@ function formatTimeAgo(dateString: string) {
 
 export default function FeedPage() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const { user } = useAuth();
   const [refreshing, setRefreshing] = useState(false);
   const [animKey, setAnimKey] = useState(() => Date.now());
@@ -317,29 +318,37 @@ export default function FeedPage() {
   }
 
   return (
-    <SafeAreaView className="flex-1 bg-background" edges={['top']}>
+    <View className="flex-1 bg-ink">
+      {/* Black header - fixed 300px total height for test */}
+      <View
+        style={{ height: 300, paddingTop: insets.top }}
+        className="flex-row items-start justify-between px-5"
+      >
+        <Text
+          className="text-2xl font-extrabold text-white mt-2"
+          style={{ letterSpacing: -1 }}
+        >
+          limbo
+        </Text>
+        {streakCount > 0 && (
+          <View className="flex-row items-center bg-white/10 rounded-full px-3 py-1.5 mt-2">
+            <Text className="text-sm">🔥</Text>
+            <Text className="text-white font-bold text-sm ml-1">{streakCount}</Text>
+          </View>
+        )}
+      </View>
+
+      {/* Cream "card" — rounded top corners touching the edges, sits on the black */}
       <ScrollView
-        className="flex-1"
-        contentContainerStyle={{ paddingBottom: 100 }}
+        className="flex-1 bg-background"
+        style={{ borderTopLeftRadius: 24, borderTopRightRadius: 24 }}
+        contentContainerStyle={{ paddingTop: 16, paddingBottom: 100 }}
         scrollEnabled={!isSliderActive}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#F7DA21" />
         }
       >
-        {/* V2 Header: limbo + streak */}
-        <View className="flex-row items-center justify-between px-5 pt-2 pb-4">
-          <Text className="text-2xl font-extrabold text-ink" style={{ letterSpacing: -1 }}>
-            limbo
-          </Text>
-          {streakCount > 0 && (
-            <View className="flex-row items-center bg-sand rounded-full px-3 py-1.5">
-              <Text className="text-sm">🔥</Text>
-              <Text className="text-ink font-bold text-sm ml-1">{streakCount}</Text>
-            </View>
-          )}
-        </View>
-
-        {/* 1. DAILY ARCHIVE - 7 day calendar (first section per spec) */}
+        {/* 1. DAILY ARCHIVE */}
         <DailyArchive userId={user?.id} animKey={animKey} />
 
         {/* 2. TODAY'S PROMPT - Daily PromptCard */}
@@ -714,6 +723,6 @@ export default function FeedPage() {
           reportedUserId={reportTarget.userId}
         />
       )}
-    </SafeAreaView>
+    </View>
   );
 }
