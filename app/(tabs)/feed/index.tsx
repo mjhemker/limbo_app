@@ -1,7 +1,7 @@
 import { View, Text, ScrollView, TouchableOpacity, RefreshControl, ActivityIndicator, Image, Dimensions, Pressable, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useFocusEffect } from 'expo-router';
-import { Plus, Lock, MessageCircle, Ghost, Bell, Type, Mic, Camera, Image as ImageIcon, ChevronRight, MoreHorizontal } from 'lucide-react-native';
+import { Ghost, Bell, ChevronRight, MoreHorizontal } from 'lucide-react-native';
 import ReportModal from '../../../components/modals/ReportModal';
 import { useBlockUser } from '../../../hooks/useBlocks';
 import { useState, useEffect, useCallback } from 'react';
@@ -24,7 +24,6 @@ import { DailyArchive } from '../../../components/feed/DailyArchive';
 import { VisibilityToggle } from '../../../components/common/VisibilityToggle';
 import { useToggleVisibility } from '../../../hooks/useResponses';
 import OpinionSlider from '../../../components/opinion/OpinionSlider';
-import LightningButton from '../../../components/lightning/LightningButton';
 import SuggestedMutuals from '../../../components/profile/SuggestedMutuals';
 import { useUserResponse } from '../../../hooks/useResponses';
 import { useFriendsResponses } from '../../../hooks/useResponses';
@@ -33,6 +32,7 @@ import { useLimboFriends, useRescueFriend } from '../../../hooks/useLimbo';
 import { useSendNudge } from '../../../hooks/useNudges';
 import { useMyGroupChats as useMyCircles } from '../../../hooks/useChats';
 import { ResponseReactions } from '../../../components/feed/ResponseReactions';
+import PromptCard from '../../../components/home/PromptCard';
 import * as haptics from '../../../utils/haptics';
 import { toast } from '../../../utils/toast';
 
@@ -44,32 +44,6 @@ const AnimatedView = Animated.createAnimatedComponent(View);
 // Spring configs matching web app
 const SPRING_CONFIG = { damping: 25, stiffness: 300 };
 const SPRING_CONFIG_SNAPPY = { damping: 30, stiffness: 400 };
-
-// Animated Plus icon with spin effect
-function AnimatedPlusIcon({ animKey }: { animKey: number }) {
-  const rotation = useSharedValue(0);
-
-  useEffect(() => {
-    // Reset and spin: 0° → 90° → 0° with 0.5s duration
-    rotation.value = 0;
-    rotation.value = withDelay(
-      200,
-      withTiming(90, { duration: 250 }, () => {
-        rotation.value = withTiming(0, { duration: 250 });
-      })
-    );
-  }, [animKey]);
-
-  const animatedStyle = useAnimatedStyle(() => ({
-    transform: [{ rotate: `${rotation.value}deg` }],
-  }));
-
-  return (
-    <AnimatedView style={animatedStyle}>
-      <Plus size={24} color="white" strokeWidth={2} />
-    </AnimatedView>
-  );
-}
 
 // Animated avatar with pop-in effect (opacity: 0, scale: 0 → 1)
 function AnimatedAvatar({
@@ -368,104 +342,23 @@ export default function FeedPage() {
         {/* 1. DAILY ARCHIVE - 7 day calendar (first section per spec) */}
         <DailyArchive userId={user?.id} animKey={animKey} />
 
-        {/* 2. TODAY'S PROMPT - V2 Yellow Hero Card with animation */}
-        <Animated.View
-          key={`prompt-${animKey}`}
-          entering={FadeInDown.delay(50).duration(400).springify()}
-          className="px-5 mb-4"
-        >
-          <PressableScale
+        {/* 2. TODAY'S PROMPT - Daily PromptCard */}
+        <View className="px-5 mb-4">
+          <PromptCard
+            type="daily"
+            prompt={todaysPrompt}
+            hasAnswered={hasPosted}
+            friendsResponses={friendsResponses}
+            entering={FadeInDown.delay(50).duration(400).springify()}
             onPress={() => {
-              // If answered, go to detail view; if not, go to composer
               if (hasPosted) {
                 router.push(`/(tabs)/feed/prompts/${todaysPrompt.id}`);
               } else {
                 router.push('/compose');
               }
             }}
-            scale={0.98}
-            className="bg-primary rounded-[28px] p-5"
-          >
-            <Text className="text-[10px] font-bold text-ink/60 uppercase tracking-widest mb-2">
-              Today's Prompt · {hasPosted ? `${friendsCount + 1}/${friendsCount + 1} in` : 'MON'}
-            </Text>
-            <Text className="text-[24px] font-extrabold text-ink leading-tight" style={{ letterSpacing: -0.5 }}>
-              {todaysPrompt.text}
-            </Text>
-
-            {/* Friend avatars who replied - with pop-in animation */}
-            {friendsCount > 0 && (
-              <View className="flex-row items-center mt-4">
-                <View className="flex-row -space-x-2">
-                  {friendsResponses?.slice(0, 4).map((resp: any, idx: number) => (
-                    <AnimatedAvatar
-                      key={`${resp.id}-${animKey}`}
-                      index={idx}
-                      animKey={animKey}
-                      style={{ marginLeft: idx > 0 ? -8 : 0, zIndex: 4 - idx }}
-                    >
-                      <View
-                        className="w-7 h-7 rounded-full items-center justify-center border-2 border-primary"
-                        style={{ backgroundColor: getAvatarColor(idx) }}
-                      >
-                        <Text className="text-white font-bold text-xs">
-                          {resp.user?.display_name?.[0]?.toUpperCase()}
-                        </Text>
-                      </View>
-                    </AnimatedAvatar>
-                  ))}
-                </View>
-                <Text className="text-ink/70 text-[13px] font-medium ml-3">
-                  {friendsCount} in · ends 8pm
-                </Text>
-              </View>
-            )}
-
-            {/* View Feed button */}
-            <View className="flex-row items-center justify-center mt-4 pt-3 border-t border-ink/10">
-              <Text className="text-ink font-bold text-[13px] mr-1">
-                View Feed
-              </Text>
-              <ChevronRight size={16} color="#1A1A1A" strokeWidth={2.5} />
-            </View>
-          </PressableScale>
-        </Animated.View>
-
-        {/* DROP YOUR ANSWER - V2 Black Card with animation */}
-        {!hasPosted && (
-          <Animated.View
-            key={`drop-${animKey}`}
-            entering={FadeInDown.delay(100).duration(400).springify()}
-            className="px-5 mb-4"
-          >
-            <PressableScale
-              onPress={() => {
-                haptics.lightImpact();
-                router.push('/compose');
-              }}
-              scale={0.95}
-              className="bg-ink rounded-[18px] p-5 flex-row items-center"
-            >
-              <View className="w-12 h-12 bg-white/10 rounded-full items-center justify-center mr-4">
-                <AnimatedPlusIcon animKey={animKey} />
-              </View>
-              <View className="flex-1">
-                <Text className="text-white font-bold text-[17px]" style={{ letterSpacing: -0.3 }}>
-                  Drop your answer
-                </Text>
-                <Text className="text-white/50 text-[13px] font-medium mt-0.5">
-                  takes like 30 seconds
-                </Text>
-              </View>
-              <View className="flex-row gap-3">
-                <Type size={18} color="rgba(255,255,255,0.4)" />
-                <ImageIcon size={18} color="rgba(255,255,255,0.4)" />
-                <Camera size={18} color="rgba(255,255,255,0.4)" />
-                <Mic size={18} color="rgba(255,255,255,0.4)" />
-              </View>
-            </PressableScale>
-          </Animated.View>
-        )}
+          />
+        </View>
 
         {/* UNLOCKED - YOUR RESPONSE - Yellow themed to match Today's Prompt */}
         {hasPosted && userResponse && (
@@ -645,7 +538,7 @@ export default function FeedPage() {
           <Animated.View
             key={`opinion-${animKey}`}
             entering={FadeInDown.delay(100).duration(400).springify()}
-            className="px-5 mt-4"
+            className="px-5 mb-4"
           >
             <OpinionSlider
               userId={user.id}
@@ -654,15 +547,29 @@ export default function FeedPage() {
           </Animated.View>
         )}
 
-        {/* 4. LIGHTNING BUTTON */}
+        {/* 4. LIGHTNING ROUND */}
         {user?.id && (
-          <Animated.View
-            key={`lightning-${animKey}`}
-            entering={FadeInDown.delay(150).duration(400).springify()}
-            className="px-5 mt-4"
-          >
-            <LightningButton userId={user.id} variant="card" />
-          </Animated.View>
+          <View className="px-5 mb-4">
+            <PromptCard
+              type="lightning"
+              prompt={{ text: 'Quickfire questions. 5 in a row, 30 seconds each.' }}
+              answerLabel="Start round"
+              typeInfo=""
+              headerRight={
+                <Text
+                  className="font-bold text-[10px] uppercase"
+                  style={{ color: '#FFFFFF', letterSpacing: 1.5, opacity: 0.85 }}
+                >
+                  5 × 30 SECONDS
+                </Text>
+              }
+              entering={FadeInDown.delay(150).duration(400).springify()}
+              onPress={() => {
+                haptics.mediumImpact();
+                router.push('/lightning');
+              }}
+            />
+          </View>
         )}
 
         {/* 5. SUGGESTED MUTUALS */}
@@ -670,7 +577,7 @@ export default function FeedPage() {
           <Animated.View
             key={`mutuals-${animKey}`}
             entering={FadeInDown.delay(200).duration(400).springify()}
-            className="px-5 mt-4"
+            className="px-5 mb-4"
           >
             <SuggestedMutuals userId={user.id} />
           </Animated.View>
