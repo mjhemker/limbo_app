@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient, useInfiniteQuery } from '@tanstack/react-query';
 import { responsesService } from '../services/supabase/responses';
 import { storageService, FileUpload } from '../services/supabase/storage';
+import { blocksService } from '../services/supabase/blocks';
 import * as Crypto from 'expo-crypto';
 
 export function useUserResponse(userId?: string, promptId?: string) {
@@ -25,8 +26,18 @@ export function useUserResponses(userId?: string, pageSize: number = 20) {
 
 export function useFriendsResponses(promptId?: string, userId?: string) {
   return useQuery({
-    queryKey: ['responses', 'friends', promptId],
-    queryFn: () => responsesService.getFriendsResponses(promptId!, userId!),
+    queryKey: ['responses', 'friends', promptId, userId],
+    queryFn: async () => {
+      // Get responses and blocked users in parallel
+      const [responses, blockedUserIds] = await Promise.all([
+        responsesService.getFriendsResponses(promptId!, userId!),
+        blocksService.getBlockedUsers(userId!),
+      ]);
+
+      // Filter out responses from blocked users
+      const blockedSet = new Set(blockedUserIds);
+      return responses.filter((r: any) => !blockedSet.has(r.user_id));
+    },
     enabled: !!(promptId && userId),
   });
 }
@@ -38,6 +49,7 @@ interface CreateResponseParams {
   mediaFile?: FileUpload;
   audioFile?: FileUpload;
   isVisible?: boolean;
+  isPublic?: boolean;
 }
 
 export function useCreateResponse() {
@@ -51,6 +63,7 @@ export function useCreateResponse() {
       mediaFile,
       audioFile,
       isVisible,
+      isPublic,
     }: CreateResponseParams) => {
       try {
         const tempId = Crypto.randomUUID();
@@ -87,6 +100,7 @@ export function useCreateResponse() {
           media_type: mediaType,
           audio_url: audioUrl || undefined,
           is_visible: isVisible,
+          is_public: isPublic,
         });
 
         return response;
@@ -112,6 +126,7 @@ interface UpdateResponseParams {
   mediaFile?: FileUpload;
   audioFile?: FileUpload;
   isVisible?: boolean;
+  isPublic?: boolean;
   existingMediaUrl?: string;
   existingAudioUrl?: string;
 }
@@ -127,6 +142,7 @@ export function useUpdateResponse() {
       mediaFile,
       audioFile,
       isVisible,
+      isPublic,
       existingMediaUrl,
       existingAudioUrl,
     }: UpdateResponseParams) => {
@@ -160,6 +176,7 @@ export function useUpdateResponse() {
         media_type: mediaType || (mediaUrl ? undefined : undefined),
         audio_url: audioUrl,
         is_visible: isVisible,
+        is_public: isPublic,
       });
     },
     onSuccess: () => {

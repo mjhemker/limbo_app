@@ -3,67 +3,95 @@
 export const APP_NAME = 'Limbo';
 export const APP_TAGLINE = 'Daily prompts with your people';
 
-// Colors - Amber/Orange theme matching web app
+// Colors - V2 NYT-Games-inspired palette
 export const COLORS = {
-  // Primary amber theme
-  primary: '#FFBF00',
-  primaryHover: '#E6AC00',
-  primaryActive: '#CC9800',
-  // Accent orange
-  accent: '#FF7900',
-  accentLight: '#F2CF7E',
-  accentPale: '#FFF8E1',
+  // Core palette
+  background: '#FBFAF7',  // Warm off-white
+  card: '#FFFFFF',        // Pure white cards
+  ink: '#111111',         // Primary text
+  inkSoft: '#6B6760',     // Muted text
+  rule: 'rgba(0,0,0,0.06)', // Subtle borders
+
+  // Primary yellow
+  primary: '#F7DA21',
+  primaryHover: '#DEC41E',
+  primaryActive: '#C5AD1A',
+  yellow: '#F7DA21',
+  yellowPale: '#FBE893',
+
+  // Accent colors
+  accent: '#F7DA21',
+  accentLight: '#FBE893',
+  accentPale: '#FFFDF0',
+
+  // Functional colors
+  green: '#6AAA64',
+  greenPale: '#E8F1E0',
+  purple: '#8E73C9',
+  purpleLight: '#B8A4DB',
+  blue: '#4F8FE0',
+  coral: '#F26E5E',
+  coralLight: '#F9A99E',
+  sand: '#F2EBDD',
+  gold: '#C28F2C',
+  teal: '#1A6B5E',
+  orange: '#F2A93B',
+
   // Semantic
-  secondary: '#6b7280',
-  success: '#10B981',
-  warning: '#F97316',
-  danger: '#EF4444',
-  info: '#3B82F6',
+  secondary: '#6B6760',
+  success: '#6AAA64',
+  warning: '#F2A93B',
+  danger: '#F26E5E',
+  info: '#4F8FE0',
   white: '#ffffff',
   black: '#000000',
+
   gray: {
-    50: '#f9fafb',
-    100: '#f3f4f6',
-    200: '#e5e7eb',
-    300: '#d1d5db',
+    50: '#FBFAF7',
+    100: '#F5F4F1',
+    200: '#EDECEA',
+    300: '#D5D4D2',
     400: '#9ca3af',
-    500: '#6b7280',
+    500: '#6B6760',
     600: '#4b5563',
     700: '#374151',
     800: '#1f2937',
-    900: '#111827',
+    900: '#111111',
   },
   // Circle theme colors
   circleThemes: {
     black: '#000000',
-    blue: '#3B82F6',
-    purple: '#8B5CF6',
+    blue: '#4F8FE0',
+    purple: '#8E73C9',
     pink: '#EC4899',
-    red: '#EF4444',
-    orange: '#F97316',
-    green: '#10B981',
-    teal: '#14B8A6',
+    red: '#F26E5E',
+    orange: '#F2A93B',
+    green: '#6AAA64',
+    teal: '#1A6B5E',
   },
 };
 
-// Sizes
+// Sizes - V2 Design System
 export const SIZES = {
   statusBarHeight: 44,
   tabBarHeight: 50,
   headerHeight: 56,
+  // V2 Border Radius Scale
   borderRadius: {
-    sm: 4,
-    md: 8,
-    lg: 12,
-    xl: 16,
-    full: 9999,
+    sm: 14,      // Pills inside cards, small chips
+    md: 18,      // Cards, posts, prompt tiles (default)
+    lg: 22,      // Hero blocks, screen-edge surfaces, sheets
+    full: 9999,  // Pills, buttons, avatars
   },
+  // V2 Spacing Scale (8px grid)
   spacing: {
     xs: 4,
     sm: 8,
-    md: 16,
+    md: 12,
+    base: 16,
     lg: 24,
-    xl: 32,
+    xl: 40,
+    section: 64,
   },
 };
 

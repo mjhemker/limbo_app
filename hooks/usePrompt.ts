@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { promptsService } from '../services/supabase/prompts';
+import { promptsService, DailyArchiveItem } from '../services/supabase/prompts';
 
 export function useTodaysPrompt() {
   return useQuery({
@@ -77,3 +77,15 @@ export function usePromptsByCategory(category?: string) {
     enabled: !!category,
   });
 }
+
+// Daily Archive - past 7 days with prompts and user response status
+export function useDailyArchive(userId?: string) {
+  return useQuery({
+    queryKey: ['prompts', 'archive', userId],
+    queryFn: () => promptsService.getDailyArchive(userId!),
+    enabled: !!userId,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+  });
+}
+
+export type { DailyArchiveItem };

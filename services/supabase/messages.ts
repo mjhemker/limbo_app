@@ -95,75 +95,127 @@ export const messagesService = {
   },
 
   async getChats(userId: string): Promise<ChatWithLastMessage[]> {
-    // Get all chats the user belongs to
+    // Step 1: Get all chats the user belongs to
     const { data: memberships, error: memberError } = await supabase
       .from('chat_members')
       .select('chat_id, last_read_at, chat:chats(*)')
       .eq('user_id', userId);
 
-    if (memberError) {
-      console.error('Get chats error:', memberError);
-      throw memberError;
-    }
-
+    if (memberError) throw memberError;
     if (!memberships || memberships.length === 0) return [];
 
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    const chatIds = memberships.map(m => m.chat_id);
 
+    // Step 2: Get last messages for ALL chats in ONE query
+    const { data: allMessages } = await supabase
+      .from('messages')
+      .select('*, sender:profiles!messages_sender_id_fkey(*)')
+      .in('chat_id', chatIds)
+      .gte('created_at', thirtyDaysAgo.toISOString())
+      .order('created_at', { ascending: false });
+
+    // Group messages by chat_id and get only the last one per chat
+    const lastMessageByChat = new Map<string, any>();
+    for (const msg of allMessages || []) {
+      if (!lastMessageByChat.has(msg.chat_id)) {
+        lastMessageByChat.set(msg.chat_id, msg);
+      }
+    }
+
+    // Step 3: Get all chat members for DM chats in ONE query
+    const dmChatIds = memberships
+      .filter(m => (m as any).chat?.type === 'dm')
+      .map(m => m.chat_id);
+
+    const { data: allChatMembers } = await supabase
+      .from('chat_members')
+      .select('chat_id, user_id')
+      .in('chat_id', dmChatIds);
+
+    // Group members by chat_id and find partner IDs
+    const membersByChat = new Map<string, any[]>();
+    const partnerIds = new Set<string>();
+    for (const member of allChatMembers || []) {
+      if (!membersByChat.has(member.chat_id)) {
+        membersByChat.set(member.chat_id, []);
+      }
+      membersByChat.get(member.chat_id)!.push(member);
+      if (member.user_id !== userId) {
+        partnerIds.add(member.user_id);
+      }
+    }
+
+    // Step 4: Batch fetch ALL partner profiles in ONE query
+    const partnerIdsArray = Array.from(partnerIds);
+    const { data: allProfiles } = partnerIdsArray.length > 0
+      ? await supabase.from('profiles').select('*').in('id', partnerIdsArray)
+      : { data: [] };
+
+    const profilesById = new Map<string, any>();
+    for (const profile of allProfiles || []) {
+      profilesById.set(profile.id, profile);
+    }
+
+    // Step 5: Get unread counts in PARALLEL
+    const unreadPromises = memberships.map(async (membership) => {
+      const chat = (membership as any).chat;
+      const lastMessage = lastMessageByChat.get(membership.chat_id);
+
+      // Skip DMs with no recent messages
+      if (!lastMessage && chat?.type === 'dm') {
+        return { chatId: membership.chat_id, count: 0, skip: true };
+      }
+
+      if (!membership.last_read_at) {
+        return { chatId: membership.chat_id, count: 0, skip: false };
+      }
+
+      const { count } = await supabase
+        .from('messages')
+        .select('*', { count: 'exact', head: true })
+        .eq('chat_id', membership.chat_id)
+        .gt('created_at', membership.last_read_at)
+        .neq('sender_id', userId);
+
+      return { chatId: membership.chat_id, count: count || 0, skip: false };
+    });
+
+    const unreadResults = await Promise.all(unreadPromises);
+    const unreadByChat = new Map<string, number>();
+    const skipChats = new Set<string>();
+    for (const result of unreadResults) {
+      if (result.skip) {
+        skipChats.add(result.chatId);
+      } else {
+        unreadByChat.set(result.chatId, result.count);
+      }
+    }
+
+    // Step 6: Assemble results
     const results: ChatWithLastMessage[] = [];
-
     for (const membership of memberships) {
       const chatId = membership.chat_id;
       const chat = (membership as any).chat;
-      const lastReadAt = membership.last_read_at;
 
-      // Get last message
-      const { data: lastMsgArr } = await supabase
-        .from('messages')
-        .select('*, sender:profiles!messages_sender_id_fkey(*)')
-        .eq('chat_id', chatId)
-        .gte('created_at', thirtyDaysAgo.toISOString())
-        .order('created_at', { ascending: false })
-        .limit(1);
+      // Skip DMs with no recent messages
+      if (skipChats.has(chatId)) continue;
 
-      const lastMessage = lastMsgArr?.[0] || null;
+      const lastMessage = lastMessageByChat.get(chatId) || null;
+      const unreadCount = unreadByChat.get(chatId) || 0;
 
-      // Skip chats with no recent messages (for DMs)
-      if (!lastMessage && chat.type === 'dm') continue;
-
-      // Count unread messages
-      let unreadCount = 0;
-      if (lastReadAt) {
-        const { count } = await supabase
-          .from('messages')
-          .select('*', { count: 'exact', head: true })
-          .eq('chat_id', chatId)
-          .gt('created_at', lastReadAt)
-          .neq('sender_id', userId);
-        unreadCount = count || 0;
-      }
-
-      // For DMs, get the partner
       let partner = null;
-      const members: any[] = [];
-      if (chat.type === 'dm') {
-        const { data: chatMembers } = await supabase
-          .from('chat_members')
-          .select('user_id, user:profiles(*)')
-          .eq('chat_id', chatId);
+      const members = membersByChat.get(chatId) || [];
 
-        partner = chatMembers?.find((m: any) => m.user_id !== userId)?.user || null;
-        members.push(...(chatMembers || []));
+      if (chat?.type === 'dm') {
+        const partnerMember = members.find((m: any) => m.user_id !== userId);
+        if (partnerMember?.user_id) {
+          partner = profilesById.get(partnerMember.user_id) || null;
+        }
       }
 
-      results.push({
-        chat,
-        members,
-        partner,
-        lastMessage,
-        unreadCount,
-      });
+      results.push({ chat, members, partner, lastMessage, unreadCount });
     }
 
     // Sort by last message time

@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import {
   View,
   Text,
@@ -9,13 +9,13 @@ import {
   Alert,
   KeyboardAvoidingView,
   Platform,
-  Switch,
   ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
-import { X, Image as ImageIcon, Microphone, ArrowLeft, TextT, Camera } from 'phosphor-react-native';
+import { X, Image as ImageIcon, Mic, Type, Video, Camera, Clipboard as ClipboardIcon, Lock, Users, Globe, Clock } from 'lucide-react-native';
+import * as Clipboard from 'expo-clipboard';
 import { DrawingCanvas } from '../components/chat/DrawingCanvas';
 import { captureRef } from 'react-native-view-shot';
 import { useAuth } from '../contexts/AuthContext';
@@ -26,12 +26,65 @@ import { validateImageFile, validateVideoFile, validateAudioFile } from '../util
 import { toast } from '../utils/toast';
 import * as haptics from '../utils/haptics';
 
-type ResponseMode = 'text' | 'image' | 'audio' | 'draw';
+type ResponseMode = 'text' | 'photo' | 'video' | 'voice';
+
+// Calculate time remaining until 4pm Pacific
+function useCountdownTo4PMPacific() {
+  const [timeRemaining, setTimeRemaining] = useState('--:--');
+
+  useEffect(() => {
+    const calculateTimeRemaining = () => {
+      try {
+        const now = new Date();
+
+        // Get Pacific time offset (PST = -8, PDT = -7)
+        const pacificOffset = -7 * 60; // PDT in minutes
+        const localOffset = now.getTimezoneOffset();
+        const offsetDiff = localOffset + pacificOffset;
+
+        // Create current time in Pacific
+        const pacificNow = new Date(now.getTime() + offsetDiff * 60 * 1000);
+
+        // Create 4pm target for today in Pacific
+        const target = new Date(pacificNow);
+        target.setHours(16, 0, 0, 0);
+
+        // If we're past 4pm Pacific, target is tomorrow's 4pm
+        if (pacificNow >= target) {
+          target.setDate(target.getDate() + 1);
+        }
+
+        // Calculate difference in milliseconds
+        const diff = target.getTime() - pacificNow.getTime();
+
+        if (diff <= 0 || !isFinite(diff)) {
+          setTimeRemaining('00:00');
+          return;
+        }
+
+        const hours = Math.floor(diff / (1000 * 60 * 60));
+        const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+
+        setTimeRemaining(`${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`);
+      } catch (e) {
+        setTimeRemaining('--:--');
+      }
+    };
+
+    calculateTimeRemaining();
+    const interval = setInterval(calculateTimeRemaining, 60000);
+
+    return () => clearInterval(interval);
+  }, []);
+
+  return timeRemaining;
+}
 
 export default function ComposePage() {
   const router = useRouter();
   const { user } = useAuth();
   const params = useLocalSearchParams<{ promptId?: string; promptText?: string; promptType?: string; senderName?: string; options?: string; backgroundImage?: string }>();
+  const countdown = useCountdownTo4PMPacific();
 
   // If promptText is passed, this is a chat prompt. Otherwise load today's prompt.
   const isDailyPrompt = !params.promptText;
@@ -53,17 +106,12 @@ export default function ComposePage() {
   const [mediaUri, setMediaUri] = useState<string | null>(null);
   const [mediaType, setMediaType] = useState<'image' | 'video' | null>(null);
   const [audioUri, setAudioUri] = useState<string | null>(null);
-  const [isVisible, setIsVisible] = useState(true);
+  const [visibility, setVisibility] = useState<'private' | 'friends' | 'public'>('friends');
   const [loading, setLoading] = useState(false);
-  const [activeTab, setActiveTab] = useState<ResponseMode>('text');
+  const [activeMode, setActiveMode] = useState<ResponseMode>('text');
   const [selectedOption, setSelectedOption] = useState<number | null>(null);
   const [defendText, setDefendText] = useState('');
   const [hasDrawing, setHasDrawing] = useState(false);
-
-  // Set default tab based on prompt type
-  useEffect(() => {
-    if (promptType === 'draw') setActiveTab('draw');
-  }, [promptType]);
 
   useEffect(() => {
     if (existingResponse) {
@@ -71,10 +119,21 @@ export default function ComposePage() {
       setMediaUri(existingResponse.media_url || null);
       setMediaType(existingResponse.media_type || null);
       setAudioUri(existingResponse.audio_url || null);
-      setIsVisible(existingResponse.is_visible);
 
-      if (existingResponse.media_url) setActiveTab('image');
-      else if (existingResponse.audio_url) setActiveTab('audio');
+      // Determine visibility from is_visible and is_public
+      if (!existingResponse.is_visible) {
+        setVisibility('private');
+      } else if (existingResponse.is_public) {
+        setVisibility('public');
+      } else {
+        setVisibility('friends');
+      }
+
+      if (existingResponse.media_url) {
+        setActiveMode(existingResponse.media_type === 'video' ? 'video' : 'photo');
+      } else if (existingResponse.audio_url) {
+        setActiveMode('voice');
+      }
     }
   }, [existingResponse]);
 
@@ -86,7 +145,7 @@ export default function ComposePage() {
     }
 
     const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.All,
+      mediaTypes: activeMode === 'video' ? ImagePicker.MediaTypeOptions.Videos : ImagePicker.MediaTypeOptions.Images,
       allowsEditing: true,
       quality: 0.8,
     });
@@ -112,7 +171,6 @@ export default function ComposePage() {
 
       setMediaUri(asset.uri);
       setMediaType(isVideo ? 'video' : 'image');
-      setActiveTab('image');
     }
   };
 
@@ -149,11 +207,34 @@ export default function ComposePage() {
 
       setMediaUri(asset.uri);
       setMediaType(isVideo ? 'video' : 'image');
-      setActiveTab('image');
+    }
+  };
+
+  const pasteImage = async () => {
+    try {
+      const hasImage = await Clipboard.hasImageAsync();
+      if (hasImage) {
+        const image = await Clipboard.getImageAsync({ format: 'png' });
+        if (image?.data) {
+          const dataUri = `data:image/png;base64,${image.data}`;
+          setMediaUri(dataUri);
+          setMediaType('image');
+          haptics.success();
+          toast.success('Image pasted from clipboard');
+        }
+      } else {
+        toast.info('No image in clipboard');
+      }
+    } catch (error) {
+      console.error('Paste image error:', error);
+      toast.error('Failed to paste image');
     }
   };
 
   const handlePost = async () => {
+    const isDebate = promptType === 'debate';
+    const isDraw = promptType === 'draw';
+
     if (isDebate) {
       if (selectedOption === null) {
         Alert.alert('Error', 'Please select an option');
@@ -236,6 +317,10 @@ export default function ComposePage() {
         ? JSON.stringify({ option: selectedOption, optionLabel: debateOptions[selectedOption!], defend: defendText.trim() })
         : textContent;
 
+      // Convert visibility state to is_visible and is_public
+      const isVisible = visibility !== 'private';
+      const isPublic = visibility === 'public';
+
       if (existingResponse) {
         await updateResponse.mutateAsync({
           responseId: existingResponse.id,
@@ -244,6 +329,7 @@ export default function ComposePage() {
           mediaFile,
           audioFile,
           isVisible,
+          isPublic,
           existingMediaUrl: existingResponse.media_url,
           existingAudioUrl: existingResponse.audio_url,
         });
@@ -255,6 +341,7 @@ export default function ComposePage() {
           mediaFile,
           audioFile,
           isVisible,
+          isPublic,
         });
       }
 
@@ -268,18 +355,28 @@ export default function ComposePage() {
     }
   };
 
+  const isDebate = promptType === 'debate';
+  const isDraw = promptType === 'draw';
   const hasContent = isDebate ? selectedOption !== null : isDraw ? hasDrawing : (textContent || mediaUri || audioUri);
+
+  // Mode options for pill selector
+  const modes: { key: ResponseMode; label: string; icon: any }[] = [
+    { key: 'video', label: 'Video', icon: Video },
+    { key: 'photo', label: 'Photo', icon: ImageIcon },
+    { key: 'voice', label: 'Voice', icon: Mic },
+    { key: 'text', label: 'Text', icon: Type },
+  ];
 
   if (promptLoading) {
     return (
-      <SafeAreaView edges={['top']} className="flex-1 bg-white">
-        <View className="flex-row items-center px-5 py-4 border-b border-gray-100">
-          <TouchableOpacity onPress={() => router.back()}>
-            <ArrowLeft weight="bold" size={24} color="#000" />
+      <SafeAreaView edges={['top', 'bottom']} className="flex-1 bg-ink">
+        <View className="flex-row items-center justify-center px-5 py-4">
+          <TouchableOpacity onPress={() => router.back()} className="absolute left-5">
+            <X size={24} color="#fff" />
           </TouchableOpacity>
         </View>
         <View className="flex-1 items-center justify-center">
-          <ActivityIndicator size="large" color="#000" />
+          <ActivityIndicator size="large" color="#F7DA21" />
         </View>
       </SafeAreaView>
     );
@@ -287,17 +384,17 @@ export default function ComposePage() {
 
   if (!promptText) {
     return (
-      <SafeAreaView edges={['top']} className="flex-1 bg-white">
-        <View className="flex-row items-center px-5 py-4 border-b border-gray-100">
-          <TouchableOpacity onPress={() => router.back()}>
-            <ArrowLeft weight="bold" size={24} color="#000" />
+      <SafeAreaView edges={['top', 'bottom']} className="flex-1 bg-ink">
+        <View className="flex-row items-center justify-center px-5 py-4">
+          <TouchableOpacity onPress={() => router.back()} className="absolute left-5">
+            <X size={24} color="#fff" />
           </TouchableOpacity>
         </View>
         <View className="flex-1 items-center justify-center px-6">
-          <Text className="text-xl font-bold text-gray-900 text-center mb-2 font-heading">
+          <Text className="text-xl font-bold text-white text-center mb-2">
             No prompt available
           </Text>
-          <Text className="text-gray-600 text-center">
+          <Text className="text-white/60 text-center">
             Check back later!
           </Text>
         </View>
@@ -305,42 +402,44 @@ export default function ComposePage() {
     );
   }
 
-  // Determine which tabs to show based on prompt type
-  const isDebate = promptType === 'debate';
-  const isDraw = promptType === 'draw';
-
-  // Available tabs for each type
-  const tabs: { key: ResponseMode; label: string; icon: any }[] = isDraw
-    ? [{ key: 'draw', label: 'Draw', icon: null }]
-    : [
-        { key: 'text', label: 'Text', icon: TextT },
-        { key: 'image', label: 'Photo', icon: ImageIcon },
-      ];
-
   return (
-    <SafeAreaView edges={['top']} className="flex-1 bg-white">
-      <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        className="flex-1 bg-white"
-      >
-        <View className="flex-1">
+    <View className="flex-1 bg-ink">
+      <SafeAreaView edges={['top']} className="flex-1">
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          className="flex-1"
+        >
           {/* Header */}
-          <View className="px-5 pt-4 pb-3 border-b border-gray-100">
-            <View className="flex-row items-center justify-between">
-              <TouchableOpacity onPress={() => router.back()}>
-                <ArrowLeft weight="bold" size={24} color="#000" />
-              </TouchableOpacity>
-              <Text className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
-                {isDailyPrompt ? "Today's Prompt" : params.senderName ? `Prompt by ${params.senderName}` : 'Prompt'}
+          <View className="flex-row items-center justify-between px-5 py-4">
+            <TouchableOpacity
+              onPress={() => router.back()}
+              className="w-10 h-10 items-center justify-center"
+            >
+              <X size={24} color="#fff" strokeWidth={2.5} />
+            </TouchableOpacity>
+
+            {/* Center badge */}
+            <View className="flex-row items-center bg-white/10 rounded-full px-4 py-2">
+              <Text className="text-white/80 font-semibold text-[13px]">
+                {isDailyPrompt ? 'Today · Daily Prompt' : params.senderName ? `From ${params.senderName}` : 'Prompt'}
               </Text>
-              <View className="w-6" />
+            </View>
+
+            {/* Timer countdown */}
+            <View className="flex-row items-center">
+              <Clock size={14} color="#F7DA21" />
+              <Text className="text-primary font-bold text-[14px] ml-1.5">{countdown}</Text>
             </View>
           </View>
 
-          <ScrollView className="flex-1" contentContainerStyle={{ paddingBottom: 20 }} scrollEnabled={!isDraw}>
+          <ScrollView
+            className="flex-1"
+            contentContainerStyle={{ paddingBottom: 200 }}
+            keyboardShouldPersistTaps="handled"
+          >
             {/* Prompt text */}
-            <View className="px-8 py-5">
-              <Text className="text-xl font-bold text-black text-center font-heading">
+            <View className="px-6 py-8">
+              <Text className="text-[28px] font-extrabold text-white text-center leading-tight" style={{ letterSpacing: -0.5 }}>
                 {isDebate ? params.promptText : promptText}
               </Text>
             </View>
@@ -348,7 +447,7 @@ export default function ComposePage() {
             {isDebate ? (
               /* ===== DEBATE POLL UI ===== */
               <View className="px-5 pt-4">
-                <Text className="text-sm font-semibold text-gray-500 mb-4">Pick your side</Text>
+                <Text className="text-sm font-bold text-white/60 mb-4 uppercase tracking-wider">Pick your side</Text>
                 {debateOptions.map((option, index) => {
                   const isSelected = selectedOption === index;
                   return (
@@ -356,21 +455,21 @@ export default function ComposePage() {
                       key={index}
                       onPress={() => setSelectedOption(index)}
                       className={`flex-row items-center p-4 rounded-2xl mb-3 border-2 ${
-                        isSelected ? 'border-black bg-gray-50' : 'border-gray-200 bg-white'
+                        isSelected ? 'border-primary bg-primary/10' : 'border-white/20 bg-white/5'
                       }`}
                       activeOpacity={0.7}
                     >
                       <View className={`w-8 h-8 rounded-full border-2 items-center justify-center mr-3 ${
-                        isSelected ? 'border-black bg-black' : 'border-gray-300'
+                        isSelected ? 'border-primary bg-primary' : 'border-white/30'
                       }`}>
                         {isSelected && (
-                          <View className="w-3 h-3 rounded-full bg-white" />
+                          <View className="w-3 h-3 rounded-full bg-ink" />
                         )}
                       </View>
-                      <Text className="text-sm font-bold text-gray-400 mr-2">
+                      <Text className="text-sm font-bold text-white/40 mr-2">
                         {String.fromCharCode(65 + index)}
                       </Text>
-                      <Text className={`text-base flex-1 ${isSelected ? 'font-semibold text-black' : 'text-gray-700'}`}>
+                      <Text className={`text-base flex-1 ${isSelected ? 'font-semibold text-white' : 'text-white/70'}`}>
                         {option}
                       </Text>
                     </TouchableOpacity>
@@ -378,69 +477,41 @@ export default function ComposePage() {
                 })}
 
                 <View className="mt-4">
-                    <Text className="text-sm font-semibold text-gray-500 mb-2">Defend your pick (optional)</Text>
-                    <TextInput
-                      className="bg-gray-50 border border-gray-200 rounded-2xl px-4 py-3 text-base min-h-[100px]"
-                      placeholder="Why did you choose this option?"
-                      placeholderTextColor="#9ca3af"
-                      value={defendText}
-                      onChangeText={setDefendText}
-                      multiline
-                      textAlignVertical="top"
-                      maxLength={500}
-                      editable={!loading}
-                    />
-                    <Text className="text-xs text-gray-400 mt-1 text-right">
-                      {defendText.length}/500
-                    </Text>
-                  </View>
+                  <Text className="text-sm font-bold text-white/60 mb-2 uppercase tracking-wider">Defend your pick (optional)</Text>
+                  <TextInput
+                    className="bg-white/10 border border-white/20 rounded-2xl px-4 py-3 text-base text-white min-h-[100px]"
+                    placeholder="Why did you choose this option?"
+                    placeholderTextColor="rgba(255,255,255,0.4)"
+                    value={defendText}
+                    onChangeText={setDefendText}
+                    multiline
+                    textAlignVertical="top"
+                    maxLength={500}
+                    editable={!loading}
+                  />
+                  <Text className="text-xs text-white/40 mt-1 text-right">
+                    {defendText.length}/500
+                  </Text>
+                </View>
+              </View>
+            ) : isDraw ? (
+              /* Draw Canvas */
+              <View className="px-5 py-4 items-center" ref={drawingViewRef} collapsable={false}>
+                <DrawingCanvas
+                  backgroundImageUri={params.backgroundImage}
+                  onDrawingChange={setHasDrawing}
+                />
               </View>
             ) : (
               /* ===== STANDARD RESPONSE UI ===== */
-              <>
-                {isDraw ? (
-                  /* Draw Canvas */
-                  <View className="px-5 py-4 items-center" ref={drawingViewRef} collapsable={false}>
-                    <DrawingCanvas
-                      backgroundImageUri={params.backgroundImage}
-                      onDrawingChange={setHasDrawing}
-                    />
-                  </View>
-                ) : (
-                  /* ===== BASIC RESPONSE: image + text ===== */
-                  <View className="px-5">
-                    {/* Image upload */}
-                    {mediaUri ? (
-                      <View className="w-full rounded-2xl overflow-hidden mb-4" style={{ aspectRatio: 4 / 3 }}>
-                        <Image
-                          source={{ uri: mediaUri }}
-                          className="w-full h-full"
-                          resizeMode="cover"
-                        />
-                        <TouchableOpacity
-                          onPress={() => { setMediaUri(null); setMediaType(null); }}
-                          className="absolute top-3 right-3 bg-black/50 rounded-full p-2"
-                        >
-                          <X weight="bold" size={18} color="white" />
-                        </TouchableOpacity>
-                      </View>
-                    ) : (
-                      <TouchableOpacity
-                        onPress={pickImage}
-                        className="w-full rounded-2xl border-2 border-dashed border-gray-300 items-center justify-center mb-4"
-                        style={{ aspectRatio: 16 / 9 }}
-                        activeOpacity={0.6}
-                      >
-                        <ImageIcon weight="bold" size={28} color="#9ca3af" />
-                        <Text className="text-sm text-gray-400 mt-2">Add a photo (optional)</Text>
-                      </TouchableOpacity>
-                    )}
-
-                    {/* Text input */}
+              <View className="px-5">
+                {/* Text mode */}
+                {activeMode === 'text' && (
+                  <View>
                     <TextInput
-                      className="bg-gray-50 border border-gray-200 rounded-2xl px-4 py-4 text-base min-h-[120px]"
+                      className="bg-white/10 border border-white/20 rounded-[20px] px-5 py-4 text-[16px] text-white min-h-[160px]"
                       placeholder="Write your response..."
-                      placeholderTextColor="#9ca3af"
+                      placeholderTextColor="rgba(255,255,255,0.4)"
                       value={textContent}
                       onChangeText={setTextContent}
                       multiline
@@ -448,57 +519,254 @@ export default function ComposePage() {
                       maxLength={500}
                       editable={!loading}
                     />
-                    <Text className="text-xs text-gray-400 mt-1 text-right mb-4">
+                    <Text className="text-xs text-white/40 mt-2 text-right">
                       {textContent.length}/500
                     </Text>
                   </View>
                 )}
-              </>
-            )}
 
-            {/* Visibility Toggle — only for daily/feed prompts */}
-            {isDailyPrompt && (
-              <View className="px-5 mb-6">
-                <View className="bg-gray-50 rounded-3xl p-5 border border-gray-200">
-                  <View className="flex-row items-center justify-between">
-                    <View className="flex-1">
-                      <Text className="font-bold text-black mb-1">
-                        Visible to friends
-                      </Text>
-                      <Text className="text-sm text-gray-600">
-                        {isVisible ? 'Friends can see this post' : 'Only you can see this post'}
-                      </Text>
-                    </View>
-                    <Switch
-                      value={isVisible}
-                      onValueChange={setIsVisible}
-                      disabled={loading}
+                {/* Photo/Video mode */}
+                {(activeMode === 'photo' || activeMode === 'video') && (
+                  <View>
+                    {mediaUri ? (
+                      <View className="w-full rounded-[20px] overflow-hidden mb-4" style={{ aspectRatio: 4 / 3 }}>
+                        <Image
+                          source={{ uri: mediaUri }}
+                          className="w-full h-full"
+                          resizeMode="cover"
+                        />
+                        <TouchableOpacity
+                          onPress={() => { setMediaUri(null); setMediaType(null); }}
+                          className="absolute top-3 right-3 bg-black/60 rounded-full p-2"
+                        >
+                          <X size={18} color="white" />
+                        </TouchableOpacity>
+                      </View>
+                    ) : (
+                      <View className="mb-4">
+                        <View
+                          className="w-full rounded-[20px] border-2 border-dashed border-white/30 items-center justify-center bg-white/5"
+                          style={{ aspectRatio: 4 / 3 }}
+                        >
+                          {activeMode === 'video' ? (
+                            <Video size={40} color="rgba(255,255,255,0.4)" />
+                          ) : (
+                            <ImageIcon size={40} color="rgba(255,255,255,0.4)" />
+                          )}
+                          <Text className="text-[15px] text-white/40 mt-3 font-medium">
+                            {activeMode === 'video' ? 'Add a video' : 'Add a photo'}
+                          </Text>
+                        </View>
+                        {/* Source buttons */}
+                        <View className="flex-row justify-center gap-3 mt-4">
+                          <TouchableOpacity
+                            onPress={pickImage}
+                            className="flex-row items-center bg-white/10 px-5 py-3 rounded-full"
+                            activeOpacity={0.7}
+                          >
+                            <ImageIcon size={18} color="#fff" />
+                            <Text className="ml-2 text-[14px] font-semibold text-white">Gallery</Text>
+                          </TouchableOpacity>
+                          <TouchableOpacity
+                            onPress={takePhoto}
+                            className="flex-row items-center bg-white/10 px-5 py-3 rounded-full"
+                            activeOpacity={0.7}
+                          >
+                            <Camera size={18} color="#fff" />
+                            <Text className="ml-2 text-[14px] font-semibold text-white">Camera</Text>
+                          </TouchableOpacity>
+                          {activeMode === 'photo' && (
+                            <TouchableOpacity
+                              onPress={pasteImage}
+                              className="flex-row items-center bg-white/10 px-5 py-3 rounded-full"
+                              activeOpacity={0.7}
+                            >
+                              <ClipboardIcon size={18} color="#fff" />
+                              <Text className="ml-2 text-[14px] font-semibold text-white">Paste</Text>
+                            </TouchableOpacity>
+                          )}
+                        </View>
+                      </View>
+                    )}
+
+                    {/* Optional caption */}
+                    <TextInput
+                      className="bg-white/10 border border-white/20 rounded-[16px] px-4 py-3 text-[15px] text-white"
+                      placeholder="Add a caption (optional)..."
+                      placeholderTextColor="rgba(255,255,255,0.4)"
+                      value={textContent}
+                      onChangeText={setTextContent}
+                      maxLength={200}
+                      editable={!loading}
                     />
                   </View>
-                </View>
+                )}
+
+                {/* Voice mode */}
+                {activeMode === 'voice' && (
+                  <View className="items-center py-6">
+                    <AudioRecorder
+                      onRecordingComplete={(uri) => setAudioUri(uri)}
+                      existingUri={audioUri}
+                      darkMode={true}
+                    />
+                    {audioUri && (
+                      <TouchableOpacity
+                        onPress={() => setAudioUri(null)}
+                        className="mt-4 bg-white/10 px-4 py-2 rounded-full"
+                      >
+                        <Text className="text-white font-semibold text-[14px]">Remove Recording</Text>
+                      </TouchableOpacity>
+                    )}
+                  </View>
+                )}
               </View>
             )}
 
-            {/* Post Button */}
-            <View className="px-5">
-              <TouchableOpacity
-                onPress={handlePost}
-                disabled={!hasContent || loading}
-                className={`rounded-full py-4 ${
-                  hasContent && !loading ? 'bg-black' : 'bg-gray-300'
-                }`}
-                activeOpacity={0.7}
-              >
-                <Text className={`text-center font-bold text-base ${
-                  hasContent && !loading ? 'text-white' : 'text-gray-500'
-                }`}>
-                  {loading ? 'Posting...' : existingResponse ? 'Update Response' : 'Post Response'}
+            {/* Visibility Toggle — only for daily/feed prompts */}
+            {isDailyPrompt && !isDebate && !isDraw && (
+              <View className="px-5 mt-6">
+                <Text className="text-[11px] font-bold text-white/50 uppercase tracking-widest mb-3">
+                  Who can see this?
                 </Text>
-              </TouchableOpacity>
-            </View>
+                <View className="flex-row gap-2">
+                  {/* Private Option */}
+                  <TouchableOpacity
+                    onPress={() => !loading && setVisibility('private')}
+                    disabled={loading}
+                    className={`flex-1 flex-row items-center justify-center py-3.5 rounded-full border-2 ${
+                      visibility === 'private'
+                        ? 'bg-white border-white'
+                        : 'bg-white/10 border-white/20'
+                    }`}
+                    activeOpacity={0.7}
+                  >
+                    <Lock
+                      size={16}
+                      color={visibility === 'private' ? '#1A1A1A' : 'rgba(255,255,255,0.6)'}
+                      strokeWidth={2.5}
+                    />
+                    <Text
+                      className={`font-bold text-[13px] ml-1.5 ${
+                        visibility === 'private' ? 'text-ink' : 'text-white/60'
+                      }`}
+                    >
+                      Private
+                    </Text>
+                  </TouchableOpacity>
+
+                  {/* Friends Option */}
+                  <TouchableOpacity
+                    onPress={() => !loading && setVisibility('friends')}
+                    disabled={loading}
+                    className={`flex-1 flex-row items-center justify-center py-3.5 rounded-full border-2 ${
+                      visibility === 'friends'
+                        ? 'bg-white border-white'
+                        : 'bg-white/10 border-white/20'
+                    }`}
+                    activeOpacity={0.7}
+                  >
+                    <Users
+                      size={16}
+                      color={visibility === 'friends' ? '#1A1A1A' : 'rgba(255,255,255,0.6)'}
+                      strokeWidth={2.5}
+                    />
+                    <Text
+                      className={`font-bold text-[13px] ml-1.5 ${
+                        visibility === 'friends' ? 'text-ink' : 'text-white/60'
+                      }`}
+                    >
+                      Friends
+                    </Text>
+                  </TouchableOpacity>
+
+                  {/* Public Option */}
+                  <TouchableOpacity
+                    onPress={() => !loading && setVisibility('public')}
+                    disabled={loading}
+                    className={`flex-1 flex-row items-center justify-center py-3.5 rounded-full border-2 ${
+                      visibility === 'public'
+                        ? 'bg-primary border-primary'
+                        : 'bg-white/10 border-white/20'
+                    }`}
+                    activeOpacity={0.7}
+                  >
+                    <Globe
+                      size={16}
+                      color={visibility === 'public' ? '#1A1A1A' : 'rgba(255,255,255,0.6)'}
+                      strokeWidth={2.5}
+                    />
+                    <Text
+                      className={`font-bold text-[13px] ml-1.5 ${
+                        visibility === 'public' ? 'text-ink' : 'text-white/60'
+                      }`}
+                    >
+                      Public
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            )}
           </ScrollView>
-        </View>
-      </KeyboardAvoidingView>
-    </SafeAreaView>
+
+          {/* Fixed Bottom: Mode Picker + Post Button */}
+          <View className="absolute bottom-0 left-0 right-0 bg-ink border-t border-white/10">
+            <SafeAreaView edges={['bottom']}>
+              {/* Mode Picker Pills */}
+              {!isDebate && !isDraw && (
+                <View className="px-5 pt-4 pb-2">
+                  <View className="flex-row bg-white/10 rounded-full p-1">
+                    {modes.map((mode) => {
+                      const Icon = mode.icon;
+                      const isActive = activeMode === mode.key;
+                      return (
+                        <TouchableOpacity
+                          key={mode.key}
+                          onPress={() => {
+                            haptics.lightImpact();
+                            setActiveMode(mode.key);
+                          }}
+                          className={`flex-1 flex-row items-center justify-center py-2.5 rounded-full ${
+                            isActive ? 'bg-white' : ''
+                          }`}
+                          activeOpacity={0.8}
+                        >
+                          <Icon size={16} color={isActive ? '#1A1A1A' : 'rgba(255,255,255,0.5)'} />
+                          <Text
+                            className={`ml-1.5 font-bold text-[12px] ${
+                              isActive ? 'text-ink' : 'text-white/50'
+                            }`}
+                          >
+                            {mode.label}
+                          </Text>
+                        </TouchableOpacity>
+                      );
+                    })}
+                  </View>
+                </View>
+              )}
+
+              {/* Post Button */}
+              <View className="px-5 pb-4 pt-2">
+                <TouchableOpacity
+                  onPress={handlePost}
+                  disabled={!hasContent || loading}
+                  className={`rounded-full py-4 ${
+                    hasContent && !loading ? 'bg-primary' : 'bg-white/20'
+                  }`}
+                  activeOpacity={0.8}
+                >
+                  <Text className={`text-center font-extrabold text-[16px] ${
+                    hasContent && !loading ? 'text-ink' : 'text-white/40'
+                  }`}>
+                    {loading ? 'Posting...' : existingResponse ? 'Update Response' : 'Post'}
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            </SafeAreaView>
+          </View>
+        </KeyboardAvoidingView>
+      </SafeAreaView>
+    </View>
   );
 }

@@ -1,7 +1,7 @@
 import { ScrollView, Text, View, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { ArrowLeft } from 'phosphor-react-native';
+import { ArrowLeft } from 'lucide-react-native';
 
 export default function TermsOfServicePage() {
   const router = useRouter();
@@ -11,15 +11,15 @@ export default function TermsOfServicePage() {
       {/* Header */}
       <View className="flex-row items-center px-4 py-3 border-b border-gray-200">
         <TouchableOpacity onPress={() => router.back()}>
-          <ArrowLeft weight="bold" size={24} color="#111827" />
+          <ArrowLeft size={24} color="#111827" />
         </TouchableOpacity>
-        <Text className="flex-1 text-lg font-semibold text-gray-900 ml-3 font-heading">
+        <Text className="flex-1 text-lg font-semibold text-gray-900 ml-3">
           Terms of Service
         </Text>
       </View>
 
       <ScrollView className="flex-1 px-5 py-6">
-        <Text className="text-2xl font-black text-gray-900 mb-4 font-heading">
+        <Text className="text-2xl font-black text-gray-900 mb-4">
           Terms of Service
         </Text>
 
@@ -30,7 +30,7 @@ export default function TermsOfServicePage() {
         <View className="gap-6">
           {/* Acceptance of Terms */}
           <View>
-            <Text className="text-lg font-bold text-gray-900 mb-2 font-heading">
+            <Text className="text-lg font-bold text-gray-900 mb-2">
               1. Acceptance of Terms
             </Text>
             <Text className="text-gray-700 leading-6">
@@ -41,7 +41,7 @@ export default function TermsOfServicePage() {
 
           {/* Description of Service */}
           <View>
-            <Text className="text-lg font-bold text-gray-900 mb-2 font-heading">
+            <Text className="text-lg font-bold text-gray-900 mb-2">
               2. Description of Service
             </Text>
             <Text className="text-gray-700 leading-6">
@@ -53,7 +53,7 @@ export default function TermsOfServicePage() {
 
           {/* User Accounts */}
           <View>
-            <Text className="text-lg font-bold text-gray-900 mb-2 font-heading">
+            <Text className="text-lg font-bold text-gray-900 mb-2">
               3. User Accounts
             </Text>
             <Text className="text-gray-700 leading-6 mb-2">
@@ -75,7 +75,7 @@ export default function TermsOfServicePage() {
 
           {/* User Content */}
           <View>
-            <Text className="text-lg font-bold text-gray-900 mb-2 font-heading">
+            <Text className="text-lg font-bold text-gray-900 mb-2">
               4. User Content
             </Text>
             <Text className="text-gray-700 leading-6">
@@ -86,10 +86,41 @@ export default function TermsOfServicePage() {
             </Text>
           </View>
 
+          {/* Community Guidelines */}
+          <View>
+            <Text className="text-lg font-bold text-gray-900 mb-2">
+              5. Community Guidelines
+            </Text>
+            <Text className="text-gray-700 leading-6 mb-2">
+              Limbo is a community-driven platform. By using our service, you agree to follow
+              these guidelines for all user-generated content:
+            </Text>
+            <Text className="text-gray-700 leading-6 ml-4">
+              • Treat all users with respect and kindness
+            </Text>
+            <Text className="text-gray-700 leading-6 ml-4">
+              • Do not post content that is illegal, harmful, threatening, abusive, harassing,
+              defamatory, vulgar, obscene, or otherwise objectionable
+            </Text>
+            <Text className="text-gray-700 leading-6 ml-4">
+              • Do not post content that infringes on intellectual property rights
+            </Text>
+            <Text className="text-gray-700 leading-6 ml-4">
+              • Do not post personal information of others without consent
+            </Text>
+            <Text className="text-gray-700 leading-6 ml-4">
+              • Report inappropriate content using the in-app reporting feature
+            </Text>
+            <Text className="text-gray-700 leading-6 mt-2">
+              Violation of these guidelines may result in content removal, account suspension,
+              or permanent ban from the platform.
+            </Text>
+          </View>
+
           {/* Prohibited Conduct */}
           <View>
-            <Text className="text-lg font-bold text-gray-900 mb-2 font-heading">
-              5. Prohibited Conduct
+            <Text className="text-lg font-bold text-gray-900 mb-2">
+              6. Prohibited Conduct
             </Text>
             <Text className="text-gray-700 leading-6 mb-2">
               You may not:
@@ -109,12 +140,18 @@ export default function TermsOfServicePage() {
             <Text className="text-gray-700 leading-6 ml-4">
               • Use automated tools without permission
             </Text>
+            <Text className="text-gray-700 leading-6 ml-4">
+              • Impersonate another person or entity
+            </Text>
+            <Text className="text-gray-700 leading-6 ml-4">
+              • Post content depicting minors in harmful situations
+            </Text>
           </View>
 
           {/* Intellectual Property */}
           <View>
-            <Text className="text-lg font-bold text-gray-900 mb-2 font-heading">
-              6. Intellectual Property
+            <Text className="text-lg font-bold text-gray-900 mb-2">
+              7. Intellectual Property
             </Text>
             <Text className="text-gray-700 leading-6">
               Limbo and its original content, features, and functionality are owned by us and
@@ -125,8 +162,8 @@ export default function TermsOfServicePage() {
 
           {/* Termination */}
           <View>
-            <Text className="text-lg font-bold text-gray-900 mb-2 font-heading">
-              7. Termination
+            <Text className="text-lg font-bold text-gray-900 mb-2">
+              8. Termination
             </Text>
             <Text className="text-gray-700 leading-6">
               We may terminate or suspend your account at any time for violations of these
@@ -137,8 +174,8 @@ export default function TermsOfServicePage() {
 
           {/* Disclaimer */}
           <View>
-            <Text className="text-lg font-bold text-gray-900 mb-2 font-heading">
-              8. Disclaimer
+            <Text className="text-lg font-bold text-gray-900 mb-2">
+              9. Disclaimer
             </Text>
             <Text className="text-gray-700 leading-6">
               Limbo is provided "as is" without warranties of any kind. We do not guarantee
@@ -148,8 +185,8 @@ export default function TermsOfServicePage() {
 
           {/* Limitation of Liability */}
           <View>
-            <Text className="text-lg font-bold text-gray-900 mb-2 font-heading">
-              9. Limitation of Liability
+            <Text className="text-lg font-bold text-gray-900 mb-2">
+              10. Limitation of Liability
             </Text>
             <Text className="text-gray-700 leading-6">
               We are not liable for any indirect, incidental, special, or consequential
@@ -159,8 +196,8 @@ export default function TermsOfServicePage() {
 
           {/* Changes to Terms */}
           <View>
-            <Text className="text-lg font-bold text-gray-900 mb-2 font-heading">
-              10. Changes to Terms
+            <Text className="text-lg font-bold text-gray-900 mb-2">
+              11. Changes to Terms
             </Text>
             <Text className="text-gray-700 leading-6">
               We may update these terms from time to time. Continued use of Limbo after
@@ -170,8 +207,8 @@ export default function TermsOfServicePage() {
 
           {/* Contact */}
           <View>
-            <Text className="text-lg font-bold text-gray-900 mb-2 font-heading">
-              11. Contact
+            <Text className="text-lg font-bold text-gray-900 mb-2">
+              12. Contact
             </Text>
             <Text className="text-gray-700 leading-6">
               If you have questions about these terms, please contact us at legal@limbo.app

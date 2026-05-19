@@ -38,7 +38,10 @@ export const profilesService = {
       .single();
 
     if (error) {
-      console.error('Get profile by username error:', error);
+      // Don't log PGRST116 (not found) - it's expected when checking username availability
+      if (error.code !== 'PGRST116') {
+        console.error('Get profile by username error:', error);
+      }
       throw error;
     }
 
@@ -49,13 +52,16 @@ export const profilesService = {
     userId: string,
     updates: Partial<Profile>
   ): Promise<Profile> {
+    // Use upsert to handle both new profiles and updates
     const { data, error } = await supabase
       .from('profiles')
-      .update({
+      .upsert({
+        id: userId,
         ...updates,
         updated_at: new Date().toISOString(),
+      }, {
+        onConflict: 'id',
       })
-      .eq('id', userId)
       .select()
       .single();
 

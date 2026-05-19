@@ -10,16 +10,16 @@
     "splash": {
       "image": "./assets/splash-icon.png",
       "resizeMode": "contain",
-      "backgroundColor": "#111827"
+      "backgroundColor": "#000000"
     },
     "ios": {
       "bundleIdentifier": "com.limbosocial.app",
-      "buildNumber": "5",
+      "buildNumber": "7",
       "supportsTablet": true,
       "splash": {
         "image": "./assets/splash-icon.png",
         "resizeMode": "contain",
-        "backgroundColor": "#111827",
+        "backgroundColor": "#000000",
         "tabletImage": "./assets/splash-icon.png"
       },
       "infoPlist": {
@@ -44,7 +44,7 @@
         "READ_MEDIA_VIDEO"
       ],
       "adaptiveIcon": {
-        "backgroundColor": "#111827",
+        "backgroundColor": "#000000",
         "foregroundImage": "./assets/android-icon-foreground.png",
         "backgroundImage": "./assets/android-icon-background.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
@@ -78,7 +78,8 @@
           "color": "#111827"
         }
       ],
-      "expo-asset"
+      "expo-asset",
+      "expo-font"
     ],
     "extra": {
       "router": {

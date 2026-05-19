@@ -32,7 +32,8 @@
       "env": {
         "EXPO_PUBLIC_ENV": "production",
         "EXPO_PUBLIC_SUPABASE_URL": "https://aqaauryiptfbuqrtfcnu.supabase.co",
-        "EXPO_PUBLIC_SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFxYWF1cnlpcHRmYnVxcnRmY251Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzEwMjI4MzUsImV4cCI6MjA4NjU5ODgzNX0.jzGsqa2MOAjw4Pv3NbSDdJcr1oaN6uCKEiN8dCN--m0"
+        "EXPO_PUBLIC_SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFxYWF1cnlpcHRmYnVxcnRmY251Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzEwMjI4MzUsImV4cCI6MjA4NjU5ODgzNX0.jzGsqa2MOAjw4Pv3NbSDdJcr1oaN6uCKEiN8dCN--m0",
+        "EXPO_PUBLIC_PROJECT_ID": "cef79c8c-f8ec-4213-a015-16e3ee1d38d2"
       }
     }
   },

@@ -8,11 +8,11 @@ import {
   Alert,
   Image,
   ActivityIndicator,
-  SafeAreaView,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
-import { Camera, Upload } from 'phosphor-react-native';
+import { Camera, Upload } from 'lucide-react-native';
 import { useAuth } from '../../contexts/AuthContext';
 import { useUpdateProfile } from '../../hooks/useProfile';
 import { profilesService } from '../../services/supabase/profiles';
@@ -146,8 +146,8 @@ export default function ProfileSetupScreen() {
         avatarFile,
       });
 
-      // Navigate to main app
-      router.replace('/(tabs)/feed');
+      // Navigate to warmup prompt (step 3)
+      router.push('/auth/warmup-prompt');
     } catch (error: any) {
       Alert.alert('Error', error.message || 'Failed to create profile');
     } finally {
@@ -156,24 +156,26 @@ export default function ProfileSetupScreen() {
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-white">
+    <SafeAreaView className="flex-1 bg-background" edges={['top', 'bottom']}>
       <ScrollView
-        className="flex-1 bg-white"
-        contentContainerStyle={{ flexGrow: 1, paddingVertical: 32 }}
+        className="flex-1"
+        style={{ backgroundColor: '#FBFAF7' }}
+        contentContainerStyle={{ flexGrow: 1, justifyContent: 'center', paddingVertical: 32 }}
         showsVerticalScrollIndicator={false}
+        bounces={true}
       >
-        <View className="flex-1 px-8">
-        {/* Header */}
+        <View className="flex-1 px-8" style={{ maxWidth: 500, alignSelf: 'center', width: '100%' }}>
+        {/* Header - V2 Style */}
         <View className="mb-10">
-          <Text className="text-3xl font-black text-black mb-2 font-heading">
+          <Text className="text-3xl font-extrabold text-ink mb-2" style={{ letterSpacing: -1 }}>
             Complete Your Profile
           </Text>
-          <Text className="text-gray-600 text-base">
+          <Text className="text-ink-soft text-base font-medium">
             One last step to get started
           </Text>
         </View>
 
-        {/* Avatar Upload */}
+        {/* Avatar Upload - V2 Style */}
         <View className="items-center mb-8">
           <TouchableOpacity
             onPress={() => {
@@ -189,47 +191,47 @@ export default function ProfileSetupScreen() {
             {avatarUri ? (
               <Image
                 source={{ uri: avatarUri }}
-                className="w-28 h-28 rounded-full bg-gray-100"
+                className="w-28 h-28 rounded-full bg-sand"
               />
             ) : (
-              <View className="w-28 h-28 rounded-full bg-gray-100 items-center justify-center">
-                <Upload weight="bold" size={36} color="#9ca3af" />
+              <View className="w-28 h-28 rounded-full bg-sand items-center justify-center">
+                <Upload size={36} color="#6B6760" />
               </View>
             )}
-            <View className="absolute bottom-0 right-0 bg-black rounded-full p-2.5">
-              <Camera weight="bold" size={18} color="white" />
+            <View className="absolute bottom-0 right-0 bg-ink rounded-full p-2.5">
+              <Camera size={18} color="white" />
             </View>
           </TouchableOpacity>
-          <Text className="text-sm text-gray-500 mt-3">
+          <Text className="text-[13px] text-ink-soft font-medium mt-3">
             Add a profile photo
           </Text>
         </View>
 
-        {/* Display Name */}
+        {/* Display Name - V2 Style */}
         <View className="mb-4">
-          <Text className="text-sm font-semibold text-gray-700 mb-2">
+          <Text className="text-[13px] font-bold text-ink mb-2" style={{ letterSpacing: -0.1 }}>
             Display Name
           </Text>
           <TextInput
-            className="w-full px-4 py-4 bg-gray-50 border border-gray-200 rounded-2xl text-base text-gray-900"
+            className="w-full px-4 py-4 bg-sand border border-rule rounded-[14px] text-[15px] text-ink font-medium"
             placeholder="Your name"
-            placeholderTextColor="#9ca3af"
+            placeholderTextColor="#6B6760"
             value={displayName}
             onChangeText={setDisplayName}
             editable={!loading}
           />
         </View>
 
-        {/* Username */}
+        {/* Username - V2 Style */}
         <View className="mb-6">
-          <Text className="text-sm font-semibold text-gray-700 mb-2">
+          <Text className="text-[13px] font-bold text-ink mb-2" style={{ letterSpacing: -0.1 }}>
             Username
           </Text>
           <View className="relative">
             <TextInput
-              className="w-full px-4 py-4 bg-gray-50 border border-gray-200 rounded-2xl text-base text-gray-900"
+              className="w-full px-4 py-4 bg-sand border border-rule rounded-[14px] text-[15px] text-ink font-medium"
               placeholder="username"
-              placeholderTextColor="#9ca3af"
+              placeholderTextColor="#6B6760"
               value={username}
               onChangeText={(text) => setUsername(text.toLowerCase())}
               autoCapitalize="none"
@@ -237,45 +239,47 @@ export default function ProfileSetupScreen() {
             />
             {checkingUsername && (
               <View className="absolute right-4 top-4">
-                <ActivityIndicator size="small" color="#000" />
+                <ActivityIndicator size="small" color="#111111" />
               </View>
             )}
           </View>
           {username.length > 0 && !checkingUsername && (
             <Text
-              className={`text-xs mt-2 ml-1 ${
+              className={`text-[11px] font-bold mt-2 ml-1 ${
                 usernameAvailable === true
-                  ? 'text-green-600'
-                  : 'text-red-600'
+                  ? 'text-green'
+                  : usernameAvailable === false
+                  ? 'text-coral'
+                  : 'text-ink-soft'
               }`}
             >
               {usernameAvailable === true
                 ? '✓ Username available'
                 : usernameAvailable === false
-                ? '✗ Username not available'
+                ? '✗ Username not available or invalid format'
                 : 'Lowercase, alphanumeric + underscore, 3-20 chars'}
             </Text>
           )}
           {username.length === 0 && (
-            <Text className="text-xs text-gray-500 mt-2 ml-1">
+            <Text className="text-[11px] text-ink-soft font-medium mt-2 ml-1">
               3-20 characters, lowercase letters, numbers, and underscores
             </Text>
           )}
         </View>
 
-        {/* Complete Button */}
+        {/* Complete Button - V2 Primary */}
         <TouchableOpacity
           className={`w-full py-4 rounded-full mt-4 ${
             loading || usernameAvailable !== true
-              ? 'bg-black opacity-30'
-              : 'bg-black'
+              ? 'bg-ink opacity-30'
+              : 'bg-ink'
           }`}
           onPress={handleComplete}
           disabled={loading || usernameAvailable !== true}
           activeOpacity={0.7}
         >
-          <Text className="text-white text-center font-semibold text-base">
-            {loading ? 'Creating profile...' : 'Complete Setup'}
+          <Text className="text-white text-center font-bold text-[14px]">
+            {loading ? 'Creating profile...' : 'Complete Setup →'}
           </Text>
         </TouchableOpacity>
         </View>

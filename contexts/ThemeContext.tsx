@@ -13,48 +13,78 @@ interface ThemeContextType {
 }
 
 const lightColors = {
-  background: '#ffffff',
-  foreground: '#000000',
-  card: '#f3f4f6',
-  cardBorder: '#e5e7eb',
-  primary: '#FFBF00',
-  primaryForeground: '#ffffff',
-  secondary: '#6b7280',
+  // V2 NYT-Games-inspired palette
+  background: '#FBFAF7',    // Warm off-white
+  foreground: '#111111',    // Ink
+  card: '#FFFFFF',          // Pure white cards
+  cardBorder: 'rgba(0,0,0,0.06)', // Rule
+  primary: '#F7DA21',       // Yellow
+  primaryForeground: '#111111',
+  secondary: '#6B6760',     // Ink-soft
   secondaryForeground: '#ffffff',
-  muted: '#f3f4f6',
-  mutedForeground: '#6b7280',
-  accent: '#dbeafe',
-  accentForeground: '#1e40af',
-  destructive: '#ef4444',
+  muted: '#F2EBDD',         // Sand
+  mutedForeground: '#6B6760',
+  accent: '#8E73C9',        // Purple
+  accentForeground: '#ffffff',
+  destructive: '#F26E5E',   // Coral
   destructiveForeground: '#ffffff',
-  border: '#e5e7eb',
-  input: '#e5e7eb',
-  ring: '#FFBF00',
+  border: 'rgba(0,0,0,0.06)',
+  input: '#EDECEA',
+  ring: '#F7DA21',
+  // Semantic colors
+  success: '#6AAA64',       // Green
+  successPale: '#E8F1E0',
+  warning: '#F2A93B',       // Orange
+  danger: '#F26E5E',        // Coral
+  info: '#4F8FE0',          // Blue
+  purple: '#8E73C9',
+  coral: '#F26E5E',
+  green: '#6AAA64',
+  yellow: '#F7DA21',
+  yellowPale: '#FBE893',
+  sand: '#F2EBDD',
+  teal: '#1A6B5E',
+  gold: '#C28F2C',
   text: {
-    primary: '#111827',
-    secondary: '#6b7280',
+    primary: '#111111',     // Ink
+    secondary: '#6B6760',   // Ink-soft
     tertiary: '#9ca3af',
   },
 };
 
 const darkColors = {
+  // V2 dark mode palette
   background: '#0f172a',
   foreground: '#f1f5f9',
   card: '#1e293b',
   cardBorder: '#334155',
-  primary: '#FFBF00',
-  primaryForeground: '#ffffff',
+  primary: '#F7DA21',       // Yellow (same as light)
+  primaryForeground: '#111111',
   secondary: '#94a3b8',
   secondaryForeground: '#0f172a',
   muted: '#1e293b',
   mutedForeground: '#94a3b8',
-  accent: '#1e3a5f',
-  accentForeground: '#60a5fa',
-  destructive: '#ef4444',
+  accent: '#8E73C9',        // Purple
+  accentForeground: '#ffffff',
+  destructive: '#F26E5E',   // Coral
   destructiveForeground: '#ffffff',
   border: '#334155',
   input: '#334155',
-  ring: '#FFBF00',
+  ring: '#F7DA21',
+  // Semantic colors
+  success: '#6AAA64',
+  successPale: '#1a3d1a',
+  warning: '#F2A93B',
+  danger: '#F26E5E',
+  info: '#4F8FE0',
+  purple: '#8E73C9',
+  coral: '#F26E5E',
+  green: '#6AAA64',
+  yellow: '#F7DA21',
+  yellowPale: '#4a4520',
+  sand: '#2a2820',
+  teal: '#1A6B5E',
+  gold: '#C28F2C',
   text: {
     primary: '#f1f5f9',
     secondary: '#cbd5e1',

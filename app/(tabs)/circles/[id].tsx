@@ -16,16 +16,16 @@ export default function CircleDetailPage() {
 
   if (circleLoading) {
     return (
-      <SafeAreaView edges={['top']} className="flex-1 items-center justify-center bg-white">
-        <ActivityIndicator size="large" color="#000" />
+      <SafeAreaView edges={['top']} className="flex-1 items-center justify-center bg-background">
+        <ActivityIndicator size="large" color="#F7DA21" />
       </SafeAreaView>
     );
   }
 
   if (!circle) {
     return (
-      <SafeAreaView edges={['top']} className="flex-1 items-center justify-center bg-white px-6">
-        <Text className="text-xl font-semibold text-gray-900 text-center mb-2 font-heading">
+      <SafeAreaView edges={['top']} className="flex-1 items-center justify-center bg-background px-6">
+        <Text className="text-xl font-extrabold text-ink text-center mb-2" style={{ letterSpacing: -0.5 }}>
           Circle not found
         </Text>
       </SafeAreaView>
@@ -35,11 +35,11 @@ export default function CircleDetailPage() {
   return (
     <ChatView
       title={circle.name}
-      subtitle={`${circle.member_count || 0} members`}
+      subtitle={`${circle.member_count || 0} members · ${Math.min(circle.member_count || 0, 3)} online`}
       avatarUrl={circle.avatar_url}
       avatarFallback={circle.name?.[0]?.toUpperCase()}
-      avatarColor={circle.theme_color || '#4DB6AC'}
-      onBack={() => router.replace('/(tabs)/messages')}
+      avatarColor={circle.theme_color || '#8E73C9'}
+      onBack={() => router.back()}
       onSettingsPress={() => router.push('/(tabs)/circles/' + id + '/settings')}
       chatId={id}
       messages={messages}

@@ -1,26 +1,207 @@
-import { View, Text, ScrollView, TouchableOpacity, RefreshControl, ActivityIndicator, Image, Alert } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, RefreshControl, ActivityIndicator, Image, Dimensions, Pressable, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
-import { Plus, PlusCircle, Lock, ChatCircle, LockOpen, Ghost, Bell, TextT, Microphone, Camera, VideoCamera } from 'phosphor-react-native';
-import { ShareIcon } from '../../../components/icons/ShareIcon';
-import { useState, useEffect } from 'react';
+import { useRouter, useFocusEffect } from 'expo-router';
+import { Plus, Lock, MessageCircle, Ghost, Bell, Type, Mic, Camera, Image as ImageIcon, ChevronRight, MoreHorizontal } from 'lucide-react-native';
+import ReportModal from '../../../components/modals/ReportModal';
+import { useBlockUser } from '../../../hooks/useBlocks';
+import { useState, useEffect, useCallback } from 'react';
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withTiming,
+  withSpring,
+  withDelay,
+  interpolate,
+  FadeIn,
+  FadeInDown,
+  FadeInUp,
+  SlideInRight,
+  runOnJS,
+} from 'react-native-reanimated';
 import { useAuth } from '../../../contexts/AuthContext';
-import { useTodaysPrompt } from '../../../hooks/usePrompt';
+import { useTodaysPrompt, useDailyArchive } from '../../../hooks/usePrompt';
+import { DailyArchive } from '../../../components/feed/DailyArchive';
+import { VisibilityToggle } from '../../../components/common/VisibilityToggle';
+import { useToggleVisibility } from '../../../hooks/useResponses';
+import OpinionSlider from '../../../components/opinion/OpinionSlider';
+import LightningButton from '../../../components/lightning/LightningButton';
+import SuggestedMutuals from '../../../components/profile/SuggestedMutuals';
 import { useUserResponse } from '../../../hooks/useResponses';
 import { useFriendsResponses } from '../../../hooks/useResponses';
 import { useProfile } from '../../../hooks/useProfile';
-import { useUnlockStatus, useTrackResponseViewed, useRemainingUnlocks } from '../../../hooks/useUnlock';
 import { useLimboFriends, useRescueFriend } from '../../../hooks/useLimbo';
 import { useSendNudge } from '../../../hooks/useNudges';
+import { useMyGroupChats as useMyCircles } from '../../../hooks/useChats';
 import { ResponseReactions } from '../../../components/feed/ResponseReactions';
 import * as haptics from '../../../utils/haptics';
 import { toast } from '../../../utils/toast';
+
+const { width: SCREEN_WIDTH } = Dimensions.get('window');
+const AnimatedTouchable = Animated.createAnimatedComponent(TouchableOpacity);
+const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
+const AnimatedView = Animated.createAnimatedComponent(View);
+
+// Spring configs matching web app
+const SPRING_CONFIG = { damping: 25, stiffness: 300 };
+const SPRING_CONFIG_SNAPPY = { damping: 30, stiffness: 400 };
+
+// Animated Plus icon with spin effect
+function AnimatedPlusIcon({ animKey }: { animKey: number }) {
+  const rotation = useSharedValue(0);
+
+  useEffect(() => {
+    // Reset and spin: 0° → 90° → 0° with 0.5s duration
+    rotation.value = 0;
+    rotation.value = withDelay(
+      200,
+      withTiming(90, { duration: 250 }, () => {
+        rotation.value = withTiming(0, { duration: 250 });
+      })
+    );
+  }, [animKey]);
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [{ rotate: `${rotation.value}deg` }],
+  }));
+
+  return (
+    <AnimatedView style={animatedStyle}>
+      <Plus size={24} color="white" strokeWidth={2} />
+    </AnimatedView>
+  );
+}
+
+// Animated avatar with pop-in effect (opacity: 0, scale: 0 → 1)
+function AnimatedAvatar({
+  children,
+  index,
+  animKey,
+  style,
+}: {
+  children: React.ReactNode;
+  index: number;
+  animKey: number;
+  style?: any;
+}) {
+  const scale = useSharedValue(0);
+  const opacity = useSharedValue(0);
+
+  useEffect(() => {
+    // Reset and animate with staggered delay (100ms per avatar)
+    scale.value = 0;
+    opacity.value = 0;
+    const delay = 300 + index * 100;
+    scale.value = withDelay(delay, withSpring(1, { damping: 15, stiffness: 300 }));
+    opacity.value = withDelay(delay, withTiming(1, { duration: 200 }));
+  }, [animKey, index]);
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: scale.value }],
+    opacity: opacity.value,
+  }));
+
+  return (
+    <AnimatedView style={[animatedStyle, style]}>
+      {children}
+    </AnimatedView>
+  );
+}
+
+// Reusable pressable with scale feedback (whileTap equivalent)
+function PressableScale({
+  children,
+  onPress,
+  scale = 0.98,
+  style,
+  className,
+  ...props
+}: {
+  children: React.ReactNode;
+  onPress?: () => void;
+  scale?: number;
+  style?: any;
+  className?: string;
+  [key: string]: any;
+}) {
+  const scaleValue = useSharedValue(1);
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: scaleValue.value }],
+  }));
+
+  const handlePressIn = () => {
+    scaleValue.value = withSpring(scale, SPRING_CONFIG_SNAPPY);
+  };
+
+  const handlePressOut = () => {
+    scaleValue.value = withSpring(1, SPRING_CONFIG_SNAPPY);
+  };
+
+  return (
+    <AnimatedPressable
+      onPressIn={handlePressIn}
+      onPressOut={handlePressOut}
+      onPress={onPress}
+      style={[animatedStyle, style]}
+      className={className}
+      {...props}
+    >
+      {children}
+    </AnimatedPressable>
+  );
+}
+
+// V2 Avatar colors for friends
+const AVATAR_COLORS = ['#F26E5E', '#6AAA64', '#8E73C9', '#4F8FE0', '#C28F2C'];
+
+// Circle colors for the "From your circles" section
+const CIRCLE_COLORS = ['#6AAA64', '#F26E5E', '#8E73C9', '#4F8FE0', '#F7DA21', '#C28F2C'];
+
+function getAvatarColor(index: number) {
+  return AVATAR_COLORS[index % AVATAR_COLORS.length];
+}
+
+function getCircleColor(index: number, themeColor?: string) {
+  if (themeColor) return themeColor;
+  return CIRCLE_COLORS[index % CIRCLE_COLORS.length];
+}
+
+// Check if a color is light (for text contrast)
+function isLightColor(color: string) {
+  const hex = color.replace('#', '');
+  const r = parseInt(hex.substr(0, 2), 16);
+  const g = parseInt(hex.substr(2, 2), 16);
+  const b = parseInt(hex.substr(4, 2), 16);
+  const brightness = (r * 299 + g * 587 + b * 114) / 1000;
+  return brightness > 155;
+}
+
+function formatTimeAgo(dateString: string) {
+  const date = new Date(dateString);
+  const now = new Date();
+  const diffMs = now.getTime() - date.getTime();
+  const diffMins = Math.floor(diffMs / 60000);
+  const diffHours = Math.floor(diffMs / 3600000);
+
+  if (diffMins < 1) return 'now';
+  if (diffMins < 60) return `${diffMins}m`;
+  if (diffHours < 24) return `${diffHours}h`;
+  return `${Math.floor(diffHours / 24)}d`;
+}
 
 export default function FeedPage() {
   const router = useRouter();
   const { user } = useAuth();
   const [refreshing, setRefreshing] = useState(false);
-  const [viewedResponses, setViewedResponses] = useState<Set<string>>(new Set());
+  const [animKey, setAnimKey] = useState(() => Date.now());
+  const [isSliderActive, setIsSliderActive] = useState(false);
+
+  // Re-trigger animations when tab is focused
+  useFocusEffect(
+    useCallback(() => {
+      setAnimKey(Date.now());
+    }, [])
+  );
 
   const { data: todaysPrompt, isLoading: promptLoading, refetch: refetchPrompt } = useTodaysPrompt();
   const { data: userProfile } = useProfile(user?.id);
@@ -33,17 +214,75 @@ export default function FeedPage() {
     user?.id
   );
 
-  // Unlock system
-  const { data: unlockStatus, refetch: refetchUnlock } = useUnlockStatus(user?.id);
-  const trackResponseViewed = useTrackResponseViewed();
-  const remainingUnlocks = useRemainingUnlocks(unlockStatus);
-
   // Limbo Zone
   const { data: limboFriends, refetch: refetchLimbo } = useLimboFriends(user?.id);
   const rescueFriend = useRescueFriend();
   const sendNudge = useSendNudge();
 
+  // Circles for "From your circles" section
+  const { data: circles, refetch: refetchCircles } = useMyCircles(user?.id);
+  const blockUser = useBlockUser();
+
+  // Daily Archive
+  const { refetch: refetchArchive } = useDailyArchive(user?.id);
+
+  // Visibility toggle
+  const toggleVisibility = useToggleVisibility();
+
+  // Report modal state
+  const [reportModalVisible, setReportModalVisible] = useState(false);
+  const [reportTarget, setReportTarget] = useState<{ responseId: string; userId: string } | null>(null);
+
+  const handleResponseMenu = (response: any) => {
+    Alert.alert(
+      response.user?.display_name,
+      undefined,
+      [
+        {
+          text: 'Report Response',
+          onPress: () => {
+            setReportTarget({ responseId: response.id, userId: response.user?.id });
+            setReportModalVisible(true);
+          },
+        },
+        {
+          text: 'Block User',
+          style: 'destructive',
+          onPress: () => {
+            Alert.alert(
+              'Block User',
+              `Are you sure you want to block ${response.user?.display_name}? You won't see their responses anymore.`,
+              [
+                { text: 'Cancel', style: 'cancel' },
+                {
+                  text: 'Block',
+                  style: 'destructive',
+                  onPress: async () => {
+                    try {
+                      await blockUser.mutateAsync({
+                        blockerId: user!.id,
+                        blockedId: response.user?.id,
+                        reason: 'Blocked from feed',
+                      });
+                      toast.success(`${response.user?.display_name} has been blocked`);
+                      refetchFriends();
+                    } catch (error: any) {
+                      toast.error(error.message || 'Failed to block user');
+                    }
+                  },
+                },
+              ]
+            );
+          },
+        },
+        { text: 'Cancel', style: 'cancel' },
+      ]
+    );
+  };
+
   const hasPosted = !!userResponse;
+  const friendsCount = friendsResponses?.length || 0;
+  const streakCount = userProfile?.streak || 0;
 
   const onRefresh = async () => {
     setRefreshing(true);
@@ -51,64 +290,38 @@ export default function FeedPage() {
       refetchPrompt(),
       refetchUserResponse(),
       refetchFriends(),
-      refetchUnlock(),
       refetchLimbo(),
+      refetchCircles(),
+      refetchArchive(),
     ]);
     setRefreshing(false);
   };
 
-  // Handle rescuing a friend from limbo
   const handleRescueFriend = async (friendId: string, friendName: string) => {
     if (!user?.id) return;
-
     try {
       haptics.mediumImpact();
-
-      // Send nudge to the friend
       await sendNudge.mutateAsync({
         fromUserId: user.id,
         toUserId: friendId,
         promptId: todaysPrompt?.id,
       });
-
-      // Track the rescue
       await rescueFriend.mutateAsync({
         userId: user.id,
         friendId,
         promptId: todaysPrompt?.id,
       });
-
       toast.success(`Nudge sent to ${friendName}!`);
     } catch (error: any) {
       toast.error(error.message || 'Failed to send nudge');
     }
   };
 
-  // Handle viewing a response (track unlock)
-  const handleViewResponse = async (responseId: string, index: number) => {
-    if (!user?.id || viewedResponses.has(responseId)) return;
-
-    // Check if this response needs to use an unlock
-    if (index >= (unlockStatus?.unlockedCount || 0)) {
-      if (remainingUnlocks > 0) {
-        haptics.lightImpact();
-        await trackResponseViewed.mutateAsync({ userId: user.id, responseId });
-        setViewedResponses(prev => new Set([...prev, responseId]));
-      }
-    }
-  };
-
-  // Determine if a response is unlocked
-  const isResponseUnlocked = (index: number) => {
-    if (!unlockStatus) return index < 3; // Default to 3 unlocked
-    return index < unlockStatus.unlockedCount || index < unlockStatus.maxUnlocks;
-  };
-
   if (promptLoading) {
     return (
-      <SafeAreaView className="flex-1 bg-white" edges={['top']}>
+      <SafeAreaView className="flex-1 bg-background" edges={['top']}>
         <View className="flex-1 items-center justify-center">
-          <ActivityIndicator size="large" color="#000" />
+          <ActivityIndicator size="large" color="#F7DA21" />
         </View>
       </SafeAreaView>
     );
@@ -116,12 +329,12 @@ export default function FeedPage() {
 
   if (!todaysPrompt) {
     return (
-      <SafeAreaView className="flex-1 bg-white" edges={['top']}>
+      <SafeAreaView className="flex-1 bg-background" edges={['top']}>
         <View className="flex-1 items-center justify-center px-6">
-          <Text className="text-xl font-bold text-gray-900 text-center mb-2 font-heading">
+          <Text className="text-xl font-extrabold text-ink text-center mb-2" style={{ letterSpacing: -0.5 }}>
             No prompt today
           </Text>
-          <Text className="text-gray-600 text-center">
+          <Text className="text-ink-soft text-center font-medium">
             Check back tomorrow for a new daily prompt!
           </Text>
         </View>
@@ -130,313 +343,489 @@ export default function FeedPage() {
   }
 
   return (
-    <SafeAreaView className="flex-1 bg-white" edges={['top']}>
+    <SafeAreaView className="flex-1 bg-background" edges={['top']}>
       <ScrollView
-        className="flex-1 bg-white"
-        contentContainerStyle={{ paddingBottom: 20 }}
+        className="flex-1"
+        contentContainerStyle={{ paddingBottom: 100 }}
+        scrollEnabled={!isSliderActive}
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#F7DA21" />
         }
       >
-      {/* Today's Prompt + Add Response Card */}
-      <View className="px-5 pt-4 pb-3">
-        <View
-          className="rounded-3xl px-6 py-10"
-          style={{
-            backgroundColor: '#FFBF00',
-            shadowColor: '#000',
-            shadowOffset: { width: 0, height: 4 },
-            shadowOpacity: 0.08,
-            shadowRadius: 12,
-            elevation: 4,
-          }}
-        >
-          <View className="flex-row items-center justify-between mb-3">
-            <Text
-              className="text-sm font-semibold uppercase tracking-wide"
-              style={{ color: 'rgba(0,0,0,0.5)' }}
-            >
-              Today's Prompt
-            </Text>
-            <TouchableOpacity onPress={() => {}} className="p-1">
-              <ShareIcon size={22} color="#111827" />
-            </TouchableOpacity>
-          </View>
-          <Text
-            className="text-5xl font-bold text-black font-heading mb-5"
-            style={{ lineHeight: 48 }}
-          >
-            {todaysPrompt.text}
+        {/* V2 Header: limbo + streak */}
+        <View className="flex-row items-center justify-between px-5 pt-2 pb-4">
+          <Text className="text-2xl font-extrabold text-ink" style={{ letterSpacing: -1 }}>
+            limbo
           </Text>
-          <View className="flex-row items-center mb-4 gap-4">
-            <TextT weight="fill" size={22} color="rgba(0,0,0,0.5)" />
-            <Camera weight="fill" size={22} color="rgba(0,0,0,0.5)" />
-            <VideoCamera weight="fill" size={22} color="rgba(0,0,0,0.5)" />
-            <Microphone weight="fill" size={22} color="rgba(0,0,0,0.5)" />
-          </View>
-          <TouchableOpacity
-            onPress={() => router.push('/compose')}
-            className="bg-black rounded-full py-4 flex-row items-center justify-center"
-            activeOpacity={0.85}
-          >
-            <PlusCircle weight="fill" size={22} color="white" />
-            <Text className="text-white font-semibold text-base ml-2">
-              {hasPosted ? 'Edit your response' : 'Add your response'}
-            </Text>
-          </TouchableOpacity>
-        </View>
-      </View>
-
-      {/* Feed Locked / Friends Responses */}
-      <View className="px-5">
-        {!hasPosted ? (
-          <View className="bg-gray-50 rounded-3xl p-8 items-center border border-gray-200">
-            <View className="w-16 h-16 bg-gray-200 rounded-full items-center justify-center mb-4">
-              <Lock weight="bold" size={28} color="#9ca3af" />
+          {streakCount > 0 && (
+            <View className="flex-row items-center bg-sand rounded-full px-3 py-1.5">
+              <Text className="text-sm">🔥</Text>
+              <Text className="text-ink font-bold text-sm ml-1">{streakCount}</Text>
             </View>
-            <Text className="text-xl font-bold text-black text-center mb-2 font-heading">
-              Feed Locked
+          )}
+        </View>
+
+        {/* 1. DAILY ARCHIVE - 7 day calendar (first section per spec) */}
+        <DailyArchive userId={user?.id} animKey={animKey} />
+
+        {/* 2. TODAY'S PROMPT - V2 Yellow Hero Card with animation */}
+        <Animated.View
+          key={`prompt-${animKey}`}
+          entering={FadeInDown.delay(50).duration(400).springify()}
+          className="px-5 mb-4"
+        >
+          <PressableScale
+            onPress={() => {
+              // If answered, go to detail view; if not, go to composer
+              if (hasPosted) {
+                router.push(`/(tabs)/feed/prompts/${todaysPrompt.id}`);
+              } else {
+                router.push('/compose');
+              }
+            }}
+            scale={0.98}
+            className="bg-primary rounded-[28px] p-5"
+          >
+            <Text className="text-[10px] font-bold text-ink/60 uppercase tracking-widest mb-2">
+              Today's Prompt · {hasPosted ? `${friendsCount + 1}/${friendsCount + 1} in` : 'MON'}
             </Text>
-            <Text className="text-gray-600 text-center text-base leading-relaxed">
-              Post your response to today's prompt to see{'\n'}
-              what your friends posted!
+            <Text className="text-[24px] font-extrabold text-ink leading-tight" style={{ letterSpacing: -0.5 }}>
+              {todaysPrompt.text}
             </Text>
-            {friendsResponses && friendsResponses.length > 0 && (
-              <Text className="text-gray-500 text-sm mt-3">
-                {friendsResponses.length} {friendsResponses.length === 1 ? 'friend has' : 'friends have'} already posted
-              </Text>
-            )}
-          </View>
-        ) : friendsResponses && friendsResponses.length > 0 ? (
-          <View>
-            {/* Unlock Progress Banner */}
-            {unlockStatus && (
-              <View className="bg-primary-50 rounded-2xl p-4 mb-4 border border-primary-200">
-                <View className="flex-row items-center justify-between">
-                  <View className="flex-row items-center">
-                    <LockOpen weight="bold" size={20} color="#FFBF00" />
-                    <Text className="text-black font-semibold ml-2">
-                      {remainingUnlocks} unlocks remaining
-                    </Text>
-                  </View>
-                  <TouchableOpacity
-                    onPress={() => router.push('/(tabs)/messages')}
-                    className="bg-black rounded-full px-3 py-1.5 flex-row items-center"
-                  >
-                    <ChatCircle weight="bold" size={14} color="white" />
-                    <Text className="text-white text-xs font-semibold ml-1">
-                      DM +3
-                    </Text>
-                  </TouchableOpacity>
+
+            {/* Friend avatars who replied - with pop-in animation */}
+            {friendsCount > 0 && (
+              <View className="flex-row items-center mt-4">
+                <View className="flex-row -space-x-2">
+                  {friendsResponses?.slice(0, 4).map((resp: any, idx: number) => (
+                    <AnimatedAvatar
+                      key={`${resp.id}-${animKey}`}
+                      index={idx}
+                      animKey={animKey}
+                      style={{ marginLeft: idx > 0 ? -8 : 0, zIndex: 4 - idx }}
+                    >
+                      <View
+                        className="w-7 h-7 rounded-full items-center justify-center border-2 border-primary"
+                        style={{ backgroundColor: getAvatarColor(idx) }}
+                      >
+                        <Text className="text-white font-bold text-xs">
+                          {resp.user?.display_name?.[0]?.toUpperCase()}
+                        </Text>
+                      </View>
+                    </AnimatedAvatar>
+                  ))}
                 </View>
-                <Text className="text-gray-600 text-xs mt-2">
-                  Send a DM to a friend to unlock +3 more responses
+                <Text className="text-ink/70 text-[13px] font-medium ml-3">
+                  {friendsCount} in · ends 8pm
                 </Text>
               </View>
             )}
 
-            {friendsResponses.map((response: any, index: number) => {
-              const unlocked = isResponseUnlocked(index);
+            {/* View Feed button */}
+            <View className="flex-row items-center justify-center mt-4 pt-3 border-t border-ink/10">
+              <Text className="text-ink font-bold text-[13px] mr-1">
+                View Feed
+              </Text>
+              <ChevronRight size={16} color="#1A1A1A" strokeWidth={2.5} />
+            </View>
+          </PressableScale>
+        </Animated.View>
 
-              return (
+        {/* DROP YOUR ANSWER - V2 Black Card with animation */}
+        {!hasPosted && (
+          <Animated.View
+            key={`drop-${animKey}`}
+            entering={FadeInDown.delay(100).duration(400).springify()}
+            className="px-5 mb-4"
+          >
+            <PressableScale
+              onPress={() => {
+                haptics.lightImpact();
+                router.push('/compose');
+              }}
+              scale={0.95}
+              className="bg-ink rounded-[18px] p-5 flex-row items-center"
+            >
+              <View className="w-12 h-12 bg-white/10 rounded-full items-center justify-center mr-4">
+                <AnimatedPlusIcon animKey={animKey} />
+              </View>
+              <View className="flex-1">
+                <Text className="text-white font-bold text-[17px]" style={{ letterSpacing: -0.3 }}>
+                  Drop your answer
+                </Text>
+                <Text className="text-white/50 text-[13px] font-medium mt-0.5">
+                  takes like 30 seconds
+                </Text>
+              </View>
+              <View className="flex-row gap-3">
+                <Type size={18} color="rgba(255,255,255,0.4)" />
+                <ImageIcon size={18} color="rgba(255,255,255,0.4)" />
+                <Camera size={18} color="rgba(255,255,255,0.4)" />
+                <Mic size={18} color="rgba(255,255,255,0.4)" />
+              </View>
+            </PressableScale>
+          </Animated.View>
+        )}
+
+        {/* UNLOCKED - YOUR RESPONSE - Yellow themed to match Today's Prompt */}
+        {hasPosted && userResponse && (
+          <View className="px-5 mb-4 -mt-2">
+            {/* Connection indicator */}
+            <View className="items-center mb-2">
+              <View className="w-0.5 h-3 bg-primary rounded-full" />
+            </View>
+            <View className="bg-primary/15 rounded-[18px] border-2 border-primary/30 overflow-hidden">
+              {/* Your response header */}
+              <View className="flex-row items-center p-3 pb-2">
+                <View className="w-8 h-8 rounded-full bg-primary items-center justify-center mr-2">
+                  <Text className="text-ink font-bold text-sm">
+                    {userProfile?.display_name?.[0]?.toUpperCase() || 'Y'}
+                  </Text>
+                </View>
+                <View className="flex-1">
+                  <Text className="text-ink font-bold text-[13px]">You</Text>
+                  <Text className="text-ink-soft text-[11px] font-medium">
+                    · {formatTimeAgo(userResponse.created_at)}
+                  </Text>
+                </View>
                 <TouchableOpacity
-                  key={response.id}
-                  className="mb-4"
-                  onPress={() => {
-                    if (unlocked) {
-                      handleViewResponse(response.id, index);
-                      // Navigate to user profile or show detail
-                      router.push(`/(tabs)/profile/${response.user?.id}`);
-                    } else {
-                      haptics.warning();
+                  onPress={() => router.push('/compose')}
+                  className="bg-primary rounded-full px-3 py-1"
+                >
+                  <Text className="text-ink font-bold text-[11px]">edit</Text>
+                </TouchableOpacity>
+              </View>
+
+              {/* Your response content */}
+              <View className="px-3 pb-3">
+                {userResponse.media_url && userResponse.media_type === 'image' && (
+                  <Image
+                    source={{ uri: userResponse.media_url }}
+                    className="w-full rounded-[14px] mb-2"
+                    style={{ aspectRatio: 4/3 }}
+                    resizeMode="cover"
+                  />
+                )}
+                {userResponse.text_content && (
+                  <Text className="text-ink text-[15px] font-medium leading-relaxed">
+                    {userResponse.text_content}
+                  </Text>
+                )}
+              </View>
+
+              {/* Visibility Toggle */}
+              <View className="px-3 pb-3 flex-row items-center justify-between border-t border-primary/20 pt-3">
+                <Text className="text-[11px] font-bold text-ink-soft uppercase tracking-widest">
+                  Visibility
+                </Text>
+                <VisibilityToggle
+                  isVisible={userResponse.is_visible}
+                  onToggle={async (newValue) => {
+                    try {
+                      await toggleVisibility.mutateAsync({
+                        responseId: userResponse.id,
+                        isVisible: newValue,
+                      });
+                      refetchUserResponse();
+                      toast.success(newValue ? 'Visible to friends' : 'Set to private');
+                    } catch (error: any) {
+                      toast.error(error.message || 'Failed to update visibility');
                     }
                   }}
-                  activeOpacity={unlocked ? 0.8 : 1}
-                >
-                  <View className={`rounded-3xl overflow-hidden border ${
-                    unlocked ? 'bg-gray-50 border-gray-200' : 'bg-gray-100 border-gray-300'
-                  }`}>
-                    {/* User Header */}
-                    <View className="flex-row items-center p-4">
-                      {response.user?.avatar_url ? (
-                        <Image
-                          source={{ uri: response.user.avatar_url }}
-                          className={`w-12 h-12 rounded-full mr-3 ${!unlocked ? 'opacity-50' : ''}`}
-                        />
-                      ) : (
-                        <View className={`w-12 h-12 rounded-full bg-gray-300 mr-3 items-center justify-center ${!unlocked ? 'opacity-50' : ''}`}>
-                          <Text className="text-gray-600 font-bold text-lg">
-                            {response.user?.display_name?.[0]?.toUpperCase()}
-                          </Text>
-                        </View>
-                      )}
-                      <View className="flex-1">
-                        <Text className={`font-bold text-black text-base ${!unlocked ? 'opacity-50' : ''}`}>
-                          {response.user?.display_name}
-                        </Text>
-                        <Text className={`text-sm text-gray-500 ${!unlocked ? 'opacity-50' : ''}`}>
-                          @{response.user?.username}
-                        </Text>
-                      </View>
-                      {!unlocked && (
-                        <View className="bg-gray-200 rounded-full p-2">
-                          <Lock weight="bold" size={16} color="#6b7280" />
-                        </View>
-                      )}
-                    </View>
-
-                    {/* Response Content */}
-                    {unlocked ? (
-                      <View className="px-4 pb-4">
-                        {response.media_url && response.media_type === 'image' && (
-                          <Image
-                            source={{ uri: response.media_url }}
-                            className="w-full rounded-2xl mb-3"
-                            style={{ aspectRatio: 9/11 }}
-                            resizeMode="cover"
-                          />
-                        )}
-                        {response.text_content && (
-                          <Text className="text-black text-base leading-relaxed">
-                            {response.text_content}
-                          </Text>
-                        )}
-
-                        {/* Reactions */}
-                        <View className="mt-3">
-                          <ResponseReactions
-                            responseId={response.id}
-                            userId={user?.id || ''}
-                            postOwnerId={response.user?.id || ''}
-                          />
-                        </View>
-
-                        {/* Quick Actions */}
-                        <View className="flex-row items-center mt-3 pt-3 border-t border-gray-200 gap-2">
-                          <TouchableOpacity
-                            onPress={() => router.push(`/(tabs)/messages/${response.user?.id}`)}
-                            className="flex-row items-center bg-gray-100 rounded-full px-4 py-2"
-                          >
-                            <ChatCircle weight="bold" size={16} color="#000" />
-                            <Text className="text-black text-sm font-medium ml-2">Message</Text>
-                          </TouchableOpacity>
-                          <TouchableOpacity
-                            onPress={async () => {
-                              if (!user?.id) return;
-                              try {
-                                haptics.lightImpact();
-                                await sendNudge.mutateAsync({
-                                  fromUserId: user.id,
-                                  toUserId: response.user?.id,
-                                  promptId: todaysPrompt?.id,
-                                });
-                                toast.success(`Nudged ${response.user?.display_name}!`);
-                              } catch (error: any) {
-                                toast.error(error.message || 'Failed to nudge');
-                              }
-                            }}
-                            className="flex-row items-center bg-primary-100 rounded-full px-4 py-2"
-                          >
-                            <Bell weight="bold" size={16} color="#FFBF00" />
-                            <Text className="text-black text-sm font-medium ml-2">Nudge</Text>
-                          </TouchableOpacity>
-                        </View>
-                      </View>
-                    ) : (
-                      <View className="px-4 pb-4">
-                        {/* Blurred/Locked Content */}
-                        <View className="bg-gray-200 rounded-2xl items-center justify-center p-8">
-                          <Lock weight="bold" size={32} color="#9ca3af" />
-                          <Text className="text-gray-500 font-semibold mt-2 text-center">
-                            Response Locked
-                          </Text>
-                          <Text className="text-gray-400 text-sm text-center mt-1">
-                            {remainingUnlocks > 0
-                              ? 'Tap to unlock'
-                              : 'Send a DM to unlock more'
-                            }
-                          </Text>
-                        </View>
-                      </View>
-                    )}
-                  </View>
-                </TouchableOpacity>
-              );
-            })}
-          </View>
-        ) : (
-          <View className="bg-gray-50 rounded-3xl p-8 items-center border border-gray-200">
-            <Text className="text-lg font-semibold text-black text-center mb-2 font-heading">
-              Your friends haven't posted yet
-            </Text>
-            <Text className="text-gray-600 text-center">
-              Check back soon, or invite more friends to grow{'\n'}your feed.
-            </Text>
+                  disabled={toggleVisibility.isPending}
+                />
+              </View>
+            </View>
           </View>
         )}
-      </View>
 
-      {/* Limbo Zone Section */}
-      {hasPosted && limboFriends && limboFriends.length > 0 && (
-        <View className="px-5 mt-6">
-          <View className="flex-row items-center mb-4">
-            <Ghost weight="bold" size={20} color="#9ca3af" />
-            <Text className="text-lg font-bold text-gray-500 ml-2 font-heading">
-              Limbo Zone
-            </Text>
-            <View className="bg-gray-200 rounded-full px-2 py-0.5 ml-2">
-              <Text className="text-xs text-gray-600 font-medium">
-                {limboFriends.length}
-              </Text>
-            </View>
-          </View>
-          <Text className="text-gray-500 text-sm mb-4">
-            These friends have been inactive for 30+ days. Send them a nudge!
-          </Text>
-
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} className="-mx-5 px-5">
-            <View className="flex-row gap-3">
-              {limboFriends.map((friend) => (
-                <View
-                  key={friend.id}
-                  className="bg-gray-100 rounded-2xl p-4 items-center"
-                  style={{ width: 140 }}
-                >
-                  {friend.avatar_url ? (
-                    <Image
-                      source={{ uri: friend.avatar_url }}
-                      className="w-16 h-16 rounded-full mb-3 opacity-60"
-                    />
-                  ) : (
-                    <View className="w-16 h-16 rounded-full bg-gray-300 mb-3 items-center justify-center opacity-60">
-                      <Text className="text-gray-600 font-bold text-xl">
-                        {friend.display_name?.[0]?.toUpperCase()}
+        {/* FRIENDS' RESPONSES - V2 Cards with staggered animation */}
+        {hasPosted && friendsResponses && friendsResponses.length > 0 && (
+          <View className="px-5">
+            {friendsResponses.map((response: any, index: number) => (
+              <Animated.View
+                key={`${response.id}-${animKey}`}
+                entering={FadeInDown.delay(index * 80).duration(400).springify()}
+                className="mb-4"
+              >
+                <View className="bg-card rounded-[18px] border border-rule overflow-hidden">
+                  {/* User Header */}
+                  <View className="flex-row items-center p-3 pb-2">
+                    {response.user?.avatar_url ? (
+                      <Image
+                        source={{ uri: response.user.avatar_url }}
+                        className="w-8 h-8 rounded-full mr-2"
+                      />
+                    ) : (
+                      <View
+                        className="w-8 h-8 rounded-full mr-2 items-center justify-center"
+                        style={{ backgroundColor: getAvatarColor(index) }}
+                      >
+                        <Text className="text-white font-bold text-sm">
+                          {response.user?.display_name?.[0]?.toUpperCase()}
+                        </Text>
+                      </View>
+                    )}
+                    <View className="flex-1">
+                      <Text className="text-ink font-bold text-[13px]">
+                        {response.user?.display_name}
+                      </Text>
+                      <Text className="text-ink-soft text-[11px] font-medium">
+                        · {formatTimeAgo(response.created_at)}
                       </Text>
                     </View>
-                  )}
-                  <Text className="font-semibold text-gray-700 text-center" numberOfLines={1}>
-                    {friend.display_name}
-                  </Text>
-                  <Text className="text-xs text-gray-400 mb-3">
-                    {friend.days_inactive}+ days
-                  </Text>
-                  <TouchableOpacity
-                    onPress={() => handleRescueFriend(friend.id, friend.display_name)}
-                    className="bg-primary-500 rounded-full px-4 py-2 flex-row items-center"
-                    disabled={rescueFriend.isPending}
-                  >
-                    <Bell weight="bold" size={14} color="#000" />
-                    <Text className="text-black text-xs font-semibold ml-1">
-                      Nudge
-                    </Text>
-                  </TouchableOpacity>
+                    {/* More menu (report/block) */}
+                    <TouchableOpacity
+                      onPress={() => handleResponseMenu(response)}
+                      className="w-8 h-8 items-center justify-center"
+                    >
+                      <MoreHorizontal size={18} color="#6B6760" />
+                    </TouchableOpacity>
+                  </View>
+
+                  {/* Response Content */}
+                  <View className="px-3 pb-2">
+                    {response.media_url && response.media_type === 'image' && (
+                      <View className="mb-2">
+                        {/* Image caption label */}
+                        <View className="absolute top-2 left-2 z-10 bg-ink/80 rounded-full px-2 py-1">
+                          <Text className="text-white font-bold text-[10px] uppercase tracking-wide">
+                            {response.user?.display_name} · photo
+                          </Text>
+                        </View>
+                        <Image
+                          source={{ uri: response.media_url }}
+                          className="w-full rounded-[14px]"
+                          style={{ aspectRatio: 4/3 }}
+                          resizeMode="cover"
+                        />
+                      </View>
+                    )}
+                    {response.text_content && (
+                      <Text className="text-ink text-[15px] font-medium leading-relaxed">
+                        {response.text_content}
+                      </Text>
+                    )}
+                  </View>
+
+                  {/* V2 DM Reply Bar */}
+                  <View className="border-t border-rule bg-background/50 px-3 py-2 flex-row items-center">
+                    <Text className="text-[10px] font-bold text-ink-soft uppercase tracking-wider mr-2">DM</Text>
+                    <View className="flex-1 bg-card rounded-full px-3 py-2 border border-rule">
+                      <Text className="text-ink-soft text-[12px]">reply to {response.user?.display_name}...</Text>
+                    </View>
+                    <TouchableOpacity
+                      onPress={() => router.push(`/(tabs)/messages/${response.user?.id}`)}
+                      className="w-8 h-8 bg-ink rounded-full items-center justify-center ml-2"
+                    >
+                      <Text className="text-white font-bold text-sm">→</Text>
+                    </TouchableOpacity>
+                  </View>
+
+                  {/* Quick reactions */}
+                  <View className="px-3 py-2 flex-row gap-2">
+                    <TouchableOpacity className="bg-sand rounded-full px-3 py-1.5 flex-row items-center">
+                      <Text className="text-[11px]">🥺</Text>
+                      <Text className="text-ink font-medium text-[12px] ml-1">felt this</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity className="bg-sand rounded-full px-3 py-1.5 flex-row items-center">
+                      <Text className="text-[11px]">😭</Text>
+                      <Text className="text-ink font-medium text-[12px] ml-1">say more</Text>
+                    </TouchableOpacity>
+                  </View>
                 </View>
-              ))}
+              </Animated.View>
+            ))}
+          </View>
+        )}
+
+
+        {/* 3. OPINION SLIDER */}
+        {user?.id && (
+          <Animated.View
+            key={`opinion-${animKey}`}
+            entering={FadeInDown.delay(100).duration(400).springify()}
+            className="px-5 mt-4"
+          >
+            <OpinionSlider
+              userId={user.id}
+              onSliderInteractionChange={setIsSliderActive}
+            />
+          </Animated.View>
+        )}
+
+        {/* 4. LIGHTNING BUTTON */}
+        {user?.id && (
+          <Animated.View
+            key={`lightning-${animKey}`}
+            entering={FadeInDown.delay(150).duration(400).springify()}
+            className="px-5 mt-4"
+          >
+            <LightningButton userId={user.id} variant="card" />
+          </Animated.View>
+        )}
+
+        {/* 5. SUGGESTED MUTUALS */}
+        {user?.id && (
+          <Animated.View
+            key={`mutuals-${animKey}`}
+            entering={FadeInDown.delay(200).duration(400).springify()}
+            className="px-5 mt-4"
+          >
+            <SuggestedMutuals userId={user.id} />
+          </Animated.View>
+        )}
+
+        {/* LIMBO ZONE */}
+        {limboFriends && limboFriends.length > 0 && (
+          <View className="px-5 mt-6">
+            <View className="flex-row items-center mb-3">
+              <Ghost size={18} color="#6B6760" />
+              <Text className="text-[11px] font-bold text-ink-soft ml-2 uppercase tracking-widest">
+                Limbo Zone
+              </Text>
+              <View className="bg-sand rounded-full px-2 py-0.5 ml-2">
+                <Text className="text-[11px] text-ink-soft font-bold">{limboFriends.length}</Text>
+              </View>
             </View>
-          </ScrollView>
-        </View>
-      )}
+            <Text className="text-ink-soft text-[13px] font-medium mb-4">
+              These friends have been inactive for 30+ days.
+            </Text>
+
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} className="-mx-5 px-5">
+              <View className="flex-row gap-3">
+                {limboFriends.map((friend: any, idx: number) => {
+                  const friendName = friend.display_name || friend.username || 'Friend';
+                  return (
+                    <View key={friend.id} className="bg-sand rounded-[18px] p-4 items-center" style={{ width: 130 }}>
+                      {friend.avatar_url ? (
+                        <Image
+                          source={{ uri: friend.avatar_url }}
+                          className="w-12 h-12 rounded-full mb-2 opacity-60"
+                        />
+                      ) : (
+                        <View
+                          className="w-12 h-12 rounded-full mb-2 items-center justify-center opacity-60"
+                          style={{ backgroundColor: getAvatarColor(idx) }}
+                        >
+                          <Text className="text-white font-bold text-lg">
+                            {friendName[0]?.toUpperCase() || '?'}
+                          </Text>
+                        </View>
+                      )}
+                      <Text className="font-bold text-ink text-[13px] text-center" numberOfLines={1}>
+                        {friendName}
+                      </Text>
+                      <Text className="text-[11px] text-ink-soft font-medium mb-3">
+                        {friend.days_inactive}+ days
+                      </Text>
+                      <TouchableOpacity
+                        onPress={() => handleRescueFriend(friend.id, friendName)}
+                        className="bg-primary rounded-full px-4 py-2 flex-row items-center"
+                        disabled={rescueFriend.isPending}
+                      >
+                        <Bell size={12} color="#111111" />
+                        <Text className="text-ink text-[11px] font-bold ml-1">Nudge</Text>
+                      </TouchableOpacity>
+                    </View>
+                  );
+                })}
+              </View>
+            </ScrollView>
+          </View>
+        )}
+
+        {/* FROM YOUR CIRCLES - Horizontal card scroll */}
+        {circles && circles.length > 0 && (
+          <Animated.View
+            key={`circles-${animKey}`}
+            entering={FadeInUp.delay(300).duration(400)}
+            className="mt-6 mb-4"
+          >
+            {/* Section header */}
+            <View className="flex-row items-center justify-between px-5 mb-3">
+              <Text className="text-ink font-bold text-[15px]" style={{ letterSpacing: -0.3 }}>
+                From your circles
+              </Text>
+              <TouchableOpacity
+                onPress={() => router.push('/(tabs)/circles')}
+                className="flex-row items-center"
+              >
+                <Text className="text-ink-soft font-semibold text-[13px] mr-0.5">see all</Text>
+                <ChevronRight size={14} color="#6B6760" />
+              </TouchableOpacity>
+            </View>
+
+            {/* Horizontal scroll of circle cards */}
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={{ paddingHorizontal: 20 }}
+            >
+              <View className="flex-row gap-3">
+                {circles.slice(0, 5).map((circle: any, idx: number) => {
+                  const bgColor = getCircleColor(idx, circle.theme_color);
+                  const isDark = !isLightColor(bgColor);
+                  const textColor = isDark ? '#FFFFFF' : '#111111';
+                  const softTextColor = isDark ? 'rgba(255,255,255,0.7)' : 'rgba(17,17,17,0.6)';
+
+                  return (
+                    <Animated.View
+                      key={`${circle.id}-${animKey}`}
+                      entering={SlideInRight.delay(300 + idx * 50).duration(300).springify()}
+                    >
+                      <PressableScale
+                        onPress={() => router.push(`/(tabs)/circles/${circle.id}`)}
+                        scale={0.98}
+                        className="rounded-[16px] overflow-hidden"
+                        style={{
+                          backgroundColor: bgColor,
+                          width: SCREEN_WIDTH * 0.42,
+                          minHeight: 100,
+                        }}
+                      >
+                        <View className="p-3.5">
+                          {/* Circle name label */}
+                          <Text
+                            className="font-bold text-[10px] uppercase tracking-widest mb-1.5"
+                            style={{ color: softTextColor }}
+                            numberOfLines={1}
+                          >
+                            {circle.name}
+                          </Text>
+
+                          {/* Prompt text - placeholder or actual latest prompt */}
+                          <Text
+                            className="font-bold text-[15px] leading-tight"
+                            style={{ color: textColor, letterSpacing: -0.3 }}
+                            numberOfLines={3}
+                          >
+                            {circle.latest_prompt || `What's on your mind, ${circle.name}?`}
+                          </Text>
+                        </View>
+                      </PressableScale>
+                    </Animated.View>
+                  );
+                })}
+              </View>
+            </ScrollView>
+          </Animated.View>
+        )}
       </ScrollView>
+
+      {/* Report Modal */}
+      {reportTarget && (
+        <ReportModal
+          visible={reportModalVisible}
+          onClose={() => {
+            setReportModalVisible(false);
+            setReportTarget(null);
+          }}
+          contentType="response"
+          contentId={reportTarget.responseId}
+          reportedUserId={reportTarget.userId}
+        />
+      )}
     </SafeAreaView>
   );
 }

@@ -9,6 +9,7 @@ export interface Response {
   media_type?: 'image' | 'video';
   audio_url?: string;
   is_visible: boolean;
+  is_public: boolean;
   is_pinned: boolean;
   debate_side?: 'side_a' | 'side_b';
   created_at: string;
@@ -23,6 +24,7 @@ export interface CreateResponseInput {
   media_type?: 'image' | 'video';
   audio_url?: string;
   is_visible?: boolean;
+  is_public?: boolean;
   is_pinned?: boolean;
   debate_side?: 'side_a' | 'side_b';
 }
@@ -40,6 +42,8 @@ export const responsesService = {
         audio_url: response.audio_url || null,
         is_visible:
           response.is_visible !== undefined ? response.is_visible : true,
+        is_public:
+          response.is_public !== undefined ? response.is_public : false,
         is_pinned: response.is_pinned || false,
         debate_side: response.debate_side || null,
       })

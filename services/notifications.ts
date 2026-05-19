@@ -123,10 +123,10 @@ export const notificationsService = {
       }
     );
 
-    // Return cleanup function
+    // Return cleanup function - use .remove() method for SDK 53+ compatibility
     return () => {
-      Notifications.removeNotificationSubscription(notificationListener);
-      Notifications.removeNotificationSubscription(responseListener);
+      notificationListener.remove();
+      responseListener.remove();
     };
   },
 
