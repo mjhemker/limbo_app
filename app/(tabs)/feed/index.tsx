@@ -2,6 +2,7 @@ import { View, Text, ScrollView, TouchableOpacity, RefreshControl, ActivityIndic
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { Ghost, Bell, ChevronRight, MoreHorizontal } from 'lucide-react-native';
+import { ArrowRight } from 'phosphor-react-native';
 import ReportModal from '../../../components/modals/ReportModal';
 import { useBlockUser } from '../../../hooks/useBlocks';
 import { useState, useEffect, useCallback } from 'react';
@@ -318,38 +319,65 @@ export default function FeedPage() {
   }
 
   return (
-    <View className="flex-1 bg-ink">
-      {/* Black header - fixed 300px total height for test */}
+    <View className="flex-1 bg-background">
+      {/* Black bleed layer behind the ScrollView's top — only shows on top-bounce overshoot */}
       <View
-        style={{ height: 300, paddingTop: insets.top }}
-        className="flex-row items-start justify-between px-5"
-      >
-        <Text
-          className="text-2xl font-extrabold text-white mt-2"
-          style={{ letterSpacing: -1 }}
-        >
-          limbo
-        </Text>
-        {streakCount > 0 && (
-          <View className="flex-row items-center bg-white/10 rounded-full px-3 py-1.5 mt-2">
-            <Text className="text-sm">🔥</Text>
-            <Text className="text-white font-bold text-sm ml-1">{streakCount}</Text>
-          </View>
-        )}
-      </View>
-
-      {/* Cream "card" — rounded top corners touching the edges, sits on the black */}
+        pointerEvents="none"
+        style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 400, backgroundColor: '#1A1A1A' }}
+      />
       <ScrollView
-        className="flex-1 bg-background"
-        style={{ borderTopLeftRadius: 24, borderTopRightRadius: 24 }}
-        contentContainerStyle={{ paddingTop: 16, paddingBottom: 100 }}
+        className="flex-1"
+        contentContainerStyle={{ paddingBottom: 100 }}
         scrollEnabled={!isSliderActive}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#F7DA21" />
         }
       >
-        {/* 1. DAILY ARCHIVE */}
-        <DailyArchive userId={user?.id} animKey={animKey} />
+        {/* Party intro - black section (scrolls with content) */}
+        <View
+          style={{ height: 300, paddingTop: insets.top, backgroundColor: '#1A1A1A' }}
+          className="px-5"
+        >
+          <View className="flex-row items-center justify-between mt-2">
+            <Text
+              className="text-2xl font-extrabold text-white"
+              style={{ letterSpacing: -1 }}
+            >
+              limbo
+            </Text>
+            {streakCount > 0 && (
+              <View className="flex-row items-center bg-white/10 rounded-full px-3 py-1.5">
+                <Text className="text-sm">🔥</Text>
+                <Text className="text-white font-bold text-sm ml-1">{streakCount}</Text>
+              </View>
+            )}
+          </View>
+
+          {/* Enter party button - centered in remaining space */}
+          <View className="flex-1 items-center justify-center">
+            <TouchableOpacity
+              onPress={() => {
+                haptics.lightImpact();
+                router.push('/party-zone');
+              }}
+              activeOpacity={0.85}
+              className="flex-row items-center bg-white rounded-full px-5 py-3"
+            >
+              <Text className="text-ink font-bold mr-2 text-[15px]" style={{ letterSpacing: -0.2 }}>
+                Enter party
+              </Text>
+              <ArrowRight size={18} color="#111111" weight="bold" />
+            </TouchableOpacity>
+          </View>
+        </View>
+
+        {/* Cream card — rounded top corners, scrolls together with the black above */}
+        <View
+          className="bg-background"
+          style={{ borderTopLeftRadius: 24, borderTopRightRadius: 24, paddingTop: 16 }}
+        >
+          {/* 1. DAILY ARCHIVE */}
+          <DailyArchive userId={user?.id} animKey={animKey} />
 
         {/* 2. TODAY'S PROMPT - Daily PromptCard */}
         <View className="px-5 mb-4">
@@ -708,6 +736,7 @@ export default function FeedPage() {
             </ScrollView>
           </View>
         )}
+        </View>
       </ScrollView>
 
       {/* Report Modal */}

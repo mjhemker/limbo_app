@@ -86,6 +86,13 @@ function AppContent() {
         }}
       />
       <Stack.Screen
+        name="party-zone"
+        options={{
+          headerShown: false,
+          animation: 'slide_from_right',
+        }}
+      />
+      <Stack.Screen
         name="lightning"
         options={{
           presentation: 'fullScreenModal',
