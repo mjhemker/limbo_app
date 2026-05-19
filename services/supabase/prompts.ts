@@ -181,13 +181,14 @@ export const promptsService = {
     return data || [];
   },
 
-  // Daily Archive - get past 7 days (excluding today) with prompts
+  // Daily Archive - 6 past days + today, oldest → today (today anchors the right)
   async getDailyArchive(userId: string): Promise<DailyArchiveItem[]> {
     const today = new Date();
+    const todayStr = today.toISOString().split('T')[0];
     const result: DailyArchiveItem[] = [];
 
-    // Get past 7 days (excluding today)
-    for (let i = 1; i <= 7; i++) {
+    // i=6 (oldest) → i=0 (today)
+    for (let i = 6; i >= 0; i--) {
       const date = new Date(today);
       date.setDate(date.getDate() - i);
       const dateStr = date.toISOString().split('T')[0];
@@ -198,6 +199,7 @@ export const promptsService = {
         dayNumber: date.getDate(),
         prompt: null,
         hasAnswered: false,
+        isToday: dateStr === todayStr,
       });
     }
 
@@ -262,4 +264,5 @@ export interface DailyArchiveItem {
   dayNumber: number;
   prompt: Prompt | null;
   hasAnswered: boolean;
+  isToday?: boolean;
 }

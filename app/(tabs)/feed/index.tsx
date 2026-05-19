@@ -349,7 +349,6 @@ export default function FeedPage() {
             prompt={todaysPrompt}
             hasAnswered={hasPosted}
             friendsResponses={friendsResponses}
-            entering={FadeInDown.delay(50).duration(400).springify()}
             onPress={() => {
               if (hasPosted) {
                 router.push(`/(tabs)/feed/prompts/${todaysPrompt.id}`);
@@ -436,9 +435,8 @@ export default function FeedPage() {
         {hasPosted && friendsResponses && friendsResponses.length > 0 && (
           <View className="px-5">
             {friendsResponses.map((response: any, index: number) => (
-              <Animated.View
-                key={`${response.id}-${animKey}`}
-                entering={FadeInDown.delay(index * 80).duration(400).springify()}
+              <View
+                key={response.id}
                 className="mb-4"
               >
                 <View className="bg-card rounded-[18px] border border-rule overflow-hidden">
@@ -527,24 +525,19 @@ export default function FeedPage() {
                     </TouchableOpacity>
                   </View>
                 </View>
-              </Animated.View>
+              </View>
             ))}
           </View>
         )}
 
-
         {/* 3. OPINION SLIDER */}
         {user?.id && (
-          <Animated.View
-            key={`opinion-${animKey}`}
-            entering={FadeInDown.delay(100).duration(400).springify()}
-            className="px-5 mb-4"
-          >
+          <View className="px-5 mb-4">
             <OpinionSlider
               userId={user.id}
               onSliderInteractionChange={setIsSliderActive}
             />
-          </Animated.View>
+          </View>
         )}
 
         {/* 4. LIGHTNING ROUND */}
@@ -563,7 +556,6 @@ export default function FeedPage() {
                   5 × 30 SECONDS
                 </Text>
               }
-              entering={FadeInDown.delay(150).duration(400).springify()}
               onPress={() => {
                 haptics.mediumImpact();
                 router.push('/lightning');
@@ -574,13 +566,9 @@ export default function FeedPage() {
 
         {/* 5. SUGGESTED MUTUALS */}
         {user?.id && (
-          <Animated.View
-            key={`mutuals-${animKey}`}
-            entering={FadeInDown.delay(200).duration(400).springify()}
-            className="px-5 mb-4"
-          >
+          <View className="px-5 mb-4">
             <SuggestedMutuals userId={user.id} />
-          </Animated.View>
+          </View>
         )}
 
         {/* LIMBO ZONE */}
@@ -644,11 +632,7 @@ export default function FeedPage() {
 
         {/* FROM YOUR CIRCLES - Horizontal card scroll */}
         {circles && circles.length > 0 && (
-          <Animated.View
-            key={`circles-${animKey}`}
-            entering={FadeInUp.delay(300).duration(400)}
-            className="mt-6 mb-4"
-          >
+          <View className="mt-6 mb-4">
             {/* Section header */}
             <View className="flex-row items-center justify-between px-5 mb-3">
               <Text className="text-ink font-bold text-[15px]" style={{ letterSpacing: -0.3 }}>
@@ -677,10 +661,7 @@ export default function FeedPage() {
                   const softTextColor = isDark ? 'rgba(255,255,255,0.7)' : 'rgba(17,17,17,0.6)';
 
                   return (
-                    <Animated.View
-                      key={`${circle.id}-${animKey}`}
-                      entering={SlideInRight.delay(300 + idx * 50).duration(300).springify()}
-                    >
+                    <View key={circle.id}>
                       <PressableScale
                         onPress={() => router.push(`/(tabs)/circles/${circle.id}`)}
                         scale={0.98}
@@ -711,12 +692,12 @@ export default function FeedPage() {
                           </Text>
                         </View>
                       </PressableScale>
-                    </Animated.View>
+                    </View>
                   );
                 })}
               </View>
             </ScrollView>
-          </Animated.View>
+          </View>
         )}
       </ScrollView>
 

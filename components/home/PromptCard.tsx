@@ -56,7 +56,7 @@ function DefaultStatusIcon({ answered, color }: { answered: boolean; color: stri
   return answered ? (
     <CheckCircle size={18} color={color} weight="fill" />
   ) : (
-    <LockSimple size={18} color={color} weight="bold" />
+    <LockSimple size={18} color={color} weight="fill" />
   );
 }
 
@@ -106,7 +106,7 @@ export default function PromptCard({
   const subtleColor = config.primary + '99'; // ~60% alpha on hex
 
   return (
-    <Animated.View entering={entering ?? FadeInDown.duration(400).springify()}>
+    <Animated.View entering={entering}>
       <AnimatedPressable
         onPress={handleCardPress}
         onPressIn={() => (cardScale.value = withSpring(0.98, SPRING))}
@@ -116,7 +116,7 @@ export default function PromptCard({
         {/* HEADER */}
         <View className="flex-row items-center justify-between mb-3">
           <View className="flex-row items-center flex-1">
-            <Icon size={16} color={config.primary} weight="bold" />
+            <Icon size={16} color={config.primary} weight="fill" />
             <Text
               className="font-bold text-[10px] uppercase ml-2"
               style={{ color: config.primary, letterSpacing: 1.5 }}
@@ -188,7 +188,7 @@ export default function PromptCard({
                   {buttonLabel}
                 </Text>
                 {!hasAnswered && (
-                  <ArrowRight size={14} color={inverse} weight="bold" style={{ marginLeft: 6 }} />
+                  <ArrowRight size={14} color={inverse} weight="fill" style={{ marginLeft: 6 }} />
                 )}
               </AnimatedPressable>
             ) : (

@@ -1,11 +1,7 @@
-import { View, Text, TouchableOpacity, Pressable } from 'react-native';
+import { View, Text, TouchableOpacity } from 'react-native';
 import { useRouter } from 'expo-router';
-import Animated, { FadeInDown } from 'react-native-reanimated';
 import { useDailyArchive, DailyArchiveItem } from '../../hooks/usePrompt';
 import * as haptics from '../../utils/haptics';
-
-// Colors for completed days (cycling through) - matches webapp spec
-const DAY_COLORS = ['#5B8A3F', '#F26E5E', '#F7DA21', '#7B68EE', '#E8F1E0', '#FFB366', '#5DADE2'];
 
 interface DailyArchiveProps {
   userId?: string;
@@ -16,11 +12,8 @@ export function DailyArchive({ userId, animKey = 0 }: DailyArchiveProps) {
   const router = useRouter();
   const { data: archive, isLoading } = useDailyArchive(userId);
 
-  if (isLoading || !archive) {
-    return null;
-  }
+  if (isLoading || !archive) return null;
 
-  // Count answered days
   const answeredCount = archive.filter((day) => day.hasAnswered).length;
 
   const handleDayPress = (day: DailyArchiveItem) => {
@@ -30,11 +23,7 @@ export function DailyArchive({ userId, animKey = 0 }: DailyArchiveProps) {
   };
 
   return (
-    <Animated.View
-      key={`archive-${animKey}`}
-      entering={FadeInDown.delay(200).duration(400).springify()}
-      className="px-5 mb-4"
-    >
+    <View className="px-5 mb-4">
       {/* Section header */}
       <View className="flex-row items-center justify-between mb-3">
         <View>
@@ -52,14 +41,40 @@ export function DailyArchive({ userId, animKey = 0 }: DailyArchiveProps) {
         </TouchableOpacity>
       </View>
 
-      {/* Day circles - horizontal row */}
-      <View className="flex-row justify-between">
-        {archive.map((day, index) => {
+      {/* Day circles */}
+      <View className="flex-row" style={{ gap: 8 }}>
+        {archive.map((day) => {
           const hasPrompt = !!day.prompt;
-          const bgColor = day.hasAnswered
-            ? DAY_COLORS[index % DAY_COLORS.length]
-            : '#E8E4DE';
-          const textColor = day.hasAnswered ? '#FFFFFF' : '#6B6760';
+
+          let bgColor = 'transparent';
+          let textColor = '#6B6760';
+          let borderWidth = 0;
+          let borderColor = 'transparent';
+
+          // Fill follows completion state for every day. Today's only unique trait is the solid black ring.
+          if (day.hasAnswered) {
+            bgColor = '#F7DA21';
+            textColor = '#111111';
+          } else {
+            textColor = '#6B6B6B';
+            borderWidth = 2;
+            borderColor = 'rgba(107, 107, 107, 0.25)';
+          }
+          if (day.isToday) {
+            borderWidth = 2;
+            borderColor = '#111111';
+          }
+
+          const inner = (
+            <>
+              <Text className="text-[11px] font-bold" style={{ color: textColor }}>
+                {day.dayLetter}
+              </Text>
+              <Text className="text-[14px] font-extrabold -mt-0.5" style={{ color: textColor }}>
+                {day.dayNumber}
+              </Text>
+            </>
+          );
 
           return (
             <TouchableOpacity
@@ -67,29 +82,24 @@ export function DailyArchive({ userId, animKey = 0 }: DailyArchiveProps) {
               onPress={() => handleDayPress(day)}
               disabled={!hasPrompt}
               activeOpacity={hasPrompt ? 0.7 : 1}
-              className="items-center"
+              className="flex-1 items-center"
+              style={{ opacity: hasPrompt ? 1 : 0.5 }}
             >
               <View
-                className="w-10 h-10 rounded-full items-center justify-center mb-1"
-                style={{ backgroundColor: bgColor, opacity: hasPrompt ? 1 : 0.5 }}
+                className="w-full rounded-full items-center justify-center"
+                style={{
+                  aspectRatio: 1,
+                  backgroundColor: bgColor,
+                  borderWidth,
+                  borderColor,
+                }}
               >
-                <Text
-                  className="text-[10px] font-bold"
-                  style={{ color: textColor }}
-                >
-                  {day.dayLetter}
-                </Text>
-                <Text
-                  className="text-[12px] font-extrabold -mt-0.5"
-                  style={{ color: textColor }}
-                >
-                  {day.dayNumber}
-                </Text>
+                {inner}
               </View>
             </TouchableOpacity>
           );
         })}
       </View>
-    </Animated.View>
+    </View>
   );
 }
